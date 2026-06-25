@@ -1,0 +1,21 @@
+{
+  "name": "Sanad - ربط العمال وأصحاب العمل",
+  "short_name": "Sanad",
+  "description": "المنصة السورية للربط بين العمال وأصحاب العمل في جميع المحافظات",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["business", "jobs", "productivity"],
+  "icons": [
+    {
+      "src": "/static/images/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

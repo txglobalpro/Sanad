@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: sanad
+    runtime: python
+    repo: https://github.com/txglobalpro/Sanad
+    branch: master
+    plan: free
+    autoDeploy: yes
+    buildCommand: pip install --upgrade -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_MGMT_TOKEN
+        sync: false
+      - key: SECRET_KEY
+        sync: false

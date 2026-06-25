@@ -1,0 +1,37 @@
+<footer class="footer" dir="{% if lang == 'ar' %}rtl{% else %}ltr{% endif %}">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <h5><img src="/static/images/logo.svg" alt="Sanad" height="28" class="ms-2">{{ t.site_name }}</h5>
+        <p class="small">{{ t.footer_about }}</p>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6>{{ t.footer_quick }}</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-1"><a href="/">{{ t.nav_home }}</a></li>
+          <li class="mb-1"><a href="/register">{{ t.nav_register }}</a></li>
+          <li class="mb-1"><a href="/login">{{ t.nav_login }}</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6>{{ t.footer_business }}</h6>
+        <ul class="list-unstyled small">
+          <li class="mb-1"><a href="/employer/dashboard">{{ t.nav_dashboard }}</a></li>
+          <li class="mb-1"><a href="/employer/post-job">{{ t.nav_post_job }}</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <h6>{{ t.footer_contact }}</h6>
+        <div class="social-links d-flex gap-2 mt-2">
+          <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+          <a href="#" aria-label="Telegram"><i class="bi bi-telegram"></i></a>
+          <a href="#" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+          <a href="#" aria-label="Email"><i class="bi bi-envelope"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      {{ t.footer_copyright }}
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}{{ t.ad_title }} - Sanad{% endblock %}
+{% block content %}
+<section class="hero-section bg-dark text-white">
+  <div class="container">
+    <h4 class="fw-bold mb-1">{{ t.ad_title }}</h4>
+    <p class="mb-0 opacity-75">{{ t.ad_subtitle }}</p>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- Pending Workers -->
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-person-check text-primary ms-2"></i>{{ t.ad_pending_header }}</span>
+            <span class="badge bg-primary">{{ workers|selectattr('is_approved', 'equalto', false)|list|length }}</span>
+          </div>
+          <div class="card-body">
+            {% set pending = workers|selectattr('is_approved', 'equalto', false)|list %}
+            {% if pending %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>{{ t.ad_th_name }}</th>
+                    <th>{{ t.ad_th_city }}</th>
+                    <th>{{ t.ad_th_phone }}</th>
+                    <th>{{ t.ad_th_id }}</th>
+                    <th>{{ t.ad_th_action }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for w in pending %}
+                  <tr>
+                    <td class="fw-medium">{{ w.first_name or '' }} {{ w.last_name or '' }}</td>
+                    <td>{{ w.city or t.not_specified }}</td>
+                    <td dir="ltr" style="text-align:right">{{ w.phone or '' }}</td>
+                    <td>
+                      {% if w.id_image_front %}
+                        <a href="{{ w.id_image_front }}" target="_blank" class="btn btn-sm btn-outline-info">
+                          <i class="bi bi-eye ms-1"></i>{{ t.ad_view }}
+                        </a>
+                      {% else %}
+                        <span class="text-danger">{{ t.ad_no_id }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <button class="btn btn-sm btn-success" onclick="approveWorker('{{ w.id }}')">
+                        <i class="bi bi-check-lg ms-1"></i>{{ t.ad_approve }}
+                      </button>
+                      <button class="btn btn-sm btn-danger" onclick="rejectWorker('{{ w.id }}')">
+                        <i class="bi bi-x-lg ms-1"></i>{{ t.ad_reject }}
+                      </button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="empty-state text-center">
+              <i class="bi bi-check-circle text-success"></i>
+              <h5>{{ t.ad_pending_empty_title }}</h5>
+              <p class="text-secondary">{{ t.ad_pending_empty_desc }}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- All Workers -->
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white fw-bold"><i class="bi bi-people text-primary ms-2"></i>{{ t.ad_all_workers_header }}</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>{{ t.ad_th_name }}</th>
+                    <th>{{ t.ad_th_city }}</th>
+                    <th>{{ t.ed_th_status }}</th>
+                    <th>{{ t.ad_th_register_date }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for w in workers %}
+                  <tr>
+                    <td class="fw-medium">{{ w.first_name or '' }} {{ w.last_name or '' }}</td>
+                    <td>{{ w.city or t.not_specified }}</td>
+                    <td>
+                      {% if w.is_approved %}
+                        <span class="badge bg-success">{{ t.ad_status_approved }}</span>
+                      {% else %}
+                        <span class="badge bg-warning">{{ t.ad_status_pending_review }}</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ w.created_at[:10] if w.created_at else '' }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Jobs -->
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white fw-bold"><i class="bi bi-briefcase text-primary ms-2"></i>{{ t.ad_all_jobs_header }}</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>{{ t.ad_th_name }}</th>
+                    <th>{{ t.ed_th_city }}</th>
+                    <th>{{ t.ed_th_pay }}</th>
+                    <th>{{ t.ed_th_status }}</th>
+                    <th>{{ t.ad_th_action }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for j in jobs %}
+                  <tr>
+                    <td class="fw-medium">{{ j.title }}</td>
+                    <td>{{ j.city }}</td>
+                    <td>{{ j.pay }} ل.س</td>
+                    <td>
+                      {% if j.status == 'open' %}
+                        <span class="badge bg-success">{{ t.ed_status_open }}</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ t.ed_status_closed }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if j.status == 'open' %}
+                        <button class="btn btn-sm btn-outline-danger" onclick="closeJob('{{ j.id }}')">
+                          <i class="bi bi-x-circle ms-1"></i>{{ t.ad_close }}
+                        </button>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+async function approveWorker(id) {
+  if (!confirm('{{ t.ad_confirm_approve }}')) return;
+  await fetch('/api/admin/approve-worker/'+id, { method:'POST' });
+  location.reload();
+}
+async function rejectWorker(id) {
+  if (!confirm('{{ t.ad_confirm_reject }}')) return;
+  await fetch('/api/admin/reject-worker/'+id, { method:'POST' });
+  location.reload();
+}
+async function closeJob(id) {
+  if (!confirm('{{ t.ad_confirm_close }}')) return;
+  await fetch('/api/admin/close-job/'+id, { method:'POST' });
+  location.reload();
+}
+</script>
+{% endblock %}

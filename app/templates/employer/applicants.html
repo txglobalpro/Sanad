@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ t.ea_title }} - Sanad{% endblock %}
+{% block content %}
+<section class="section-padding">
+  <div class="container">
+    <a href="/employer/dashboard" class="btn btn-outline-secondary btn-sm mb-3">
+      <i class="bi bi-arrow-right ms-1"></i>{{ t.ea_back }}
+    </a>
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white fw-bold d-flex align-items-center gap-2">
+        <i class="bi bi-people text-success"></i>
+        {{ t.ea_header }} {{ job.title }}
+      </div>
+      <div class="card-body">
+        {% if applications %}
+        <div class="row g-3">
+          {% for app in applications %}
+          <div class="col-md-6 col-lg-4 animate-fade-in-up stagger-{{ loop.index0 % 4 + 1 }}">
+            <div class="card border">
+              <div class="card-body">
+                <h5 class="fw-bold mb-2">{{ app.workers.first_name or '' }} {{ app.workers.last_name or '' }}</h5>
+                <div class="text-secondary small mb-2">
+                  <div><i class="bi bi-telephone ms-1"></i>{{ app.workers.phone or t.ea_phone_unavailable }}</div>
+                  <div><i class="bi bi-geo-alt ms-1"></i>{{ app.workers.city or t.ea_city_unknown }}</div>
+                  <div><i class="bi bi-calendar ms-1"></i>{{ t.ea_age_label }} {{ app.workers.age or t.ea_city_unknown }}</div>
+                </div>
+                <span class="badge {% if app.status == 'pending' %}bg-warning{% elif app.status == 'accepted' %}bg-success{% else %}bg-danger{% endif %}">
+                  {% if app.status == 'pending' %}{{ t.wa_status_pending }}{% elif app.status == 'accepted' %}{{ t.wa_status_accepted }}{% else %}{{ t.wa_status_rejected }}{% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state text-center">
+          <i class="bi bi-people"></i>
+          <h5>{{ t.ea_empty_title }}</h5>
+          <p>{{ t.ea_empty_desc }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

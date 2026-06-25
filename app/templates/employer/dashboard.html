@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ t.ed_title }} - Sanad{% endblock %}
+{% block content %}
+<section class="hero-section bg-success text-white">
+  <div class="container">
+    <h4 class="fw-bold mb-1">{{ t.ed_welcome }}</h4>
+    <p class="mb-0 opacity-75">{{ t.ed_subtitle }}</p>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    <!-- Wallet Card -->
+    <div class="row g-4 mb-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm text-white" style="border-radius:16px;background:linear-gradient(135deg,#0d9488,#0f766e) !important;">
+          <div class="card-body p-4 d-flex justify-content-between align-items-center">
+            <div>
+              <small class="opacity-75">{{ t.wallet_balance }}</small>
+              <h3 class="fw-bold mb-0" style="font-size:1.8rem;"><span id="walletBalance">{{ wallet.balance if wallet else 0 }}</span> ل.س</h3>
+            </div>
+            <i class="bi bi-wallet2" style="font-size:2.5rem;opacity:0.5;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="icon-circle" style="background:#ecfdf5;color:var(--secondary);">
+            <i class="bi bi-plus-circle fs-3"></i>
+          </div>
+          <h5>{{ t.ed_post_card }}</h5>
+          <p>{{ t.ed_post_desc }}</p>
+          <a href="/employer/post-job" class="btn btn-success btn-sm w-100 mt-2">{{ t.ed_post_btn }}</a>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white fw-bold d-flex align-items-center gap-2">
+            <i class="bi bi-briefcase text-success"></i>
+            {{ t.ed_jobs_header }}
+          </div>
+          <div class="card-body">
+            {% if jobs %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>{{ t.ed_th_title }}</th>
+                    <th>{{ t.ed_th_city }}</th>
+                    <th>{{ t.ed_th_pay }}</th>
+                    <th>{{ t.ed_th_status }}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for job in jobs %}
+                  <tr>
+                    <td class="fw-medium">{{ job.title }}</td>
+                    <td>{{ job.city }}</td>
+                    <td>{{ job.pay }} ل.س</td>
+                    <td><span class="badge {% if job.status == 'open' %}bg-success{% else %}bg-secondary{% endif %}">{% if job.status == 'open' %}{{ t.ed_status_open }}{% else %}{{ t.ed_status_closed }}{% endif %}</span></td>
+                    <td><a href="/employer/jobs/{{ job.id }}/applicants" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-people ms-1"></i>{{ t.ed_applicants_btn }}
+                    </a></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="empty-state text-center">
+              <i class="bi bi-briefcase"></i>
+              <h5>{{ t.ed_empty_title }}</h5>
+              <a href="/employer/post-job" class="btn btn-success mt-2">{{ t.ed_empty_btn }}</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

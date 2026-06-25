@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 240" width="600" height="240">
+  <defs>
+    <!-- تدرجات -->
+    <linearGradient id="primary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a73e8;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0d47a1;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#34a853;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#1b5e20;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbc04;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#f57c00;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8f0fe;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#d2e3fc;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#f1f3f4;stop-opacity:1"/>
+    </linearGradient>
+
+    <!-- ظلال -->
+    <filter id="shadowLight">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.08"/>
+    </filter>
+    <filter id="shadowMedium">
+      <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#1a73e8" flood-opacity="0.15"/>
+    </filter>
+    <filter id="glow">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#34a853" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- الخلفية -->
+  <rect width="600" height="240" rx="24" fill="url(#bgGrad)"/>
+
+  <!-- ===== الأيقونة ===== -->
+
+  <!-- حلقة خلفية -->
+  <circle cx="120" cy="120" r="78" fill="none" stroke="#e8f0fe" stroke-width="2"/>
+
+  <!-- الدرع -->
+  <g filter="url(#shadowMedium)">
+    <path d="M80 65 L160 65 L160 115 Q160 160 120 180 Q80 160 80 115 Z"
+          fill="url(#shieldGrad)" stroke="url(#primary)" stroke-width="2.5"/>
+  </g>
+
+  <!-- شريط في الدرع -->
+  <path d="M80 100 L160 100" stroke="url(#primary)" stroke-width="1.5" opacity="0.3"/>
+  <path d="M80 105 L160 105" stroke="url(#primary)" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- نجمة النظافة (برّاقة) -->
+  <g transform="translate(120, 115)">
+    <!-- الأشعة -->
+    <line x1="0" y1="-18" x2="0" y2="-7" stroke="url(#accent)" stroke-width="3.5" stroke-linecap="round">
+      <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="7" x2="0" y2="18" stroke="url(#accent)" stroke-width="3.5" stroke-linecap="round">
+      <animate attributeName="opacity" values="1;0.5;1" dur="2s" begin="0.3s" repeatCount="indefinite"/>
+    </line>
+    <line x1="-18" y1="0" x2="-7" y2="0" stroke="url(#accent)" stroke-width="3.5" stroke-linecap="round">
+      <animate attributeName="opacity" values="1;0.5;1" dur="2s" begin="0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="7" y1="0" x2="18" y2="0" stroke="url(#accent)" stroke-width="3.5" stroke-linecap="round">
+      <animate attributeName="opacity" values="1;0.5;1" dur="2s" begin="0.9s" repeatCount="indefinite"/>
+    </line>
+    <!-- الأشعة القطرية -->
+    <line x1="-13" y1="-13" x2="-5" y2="-5" stroke="url(#accent)" stroke-width="3" stroke-linecap="round">
+      <animate attributeName="opacity" values="1;0.4;1" dur="2.5s" begin="0.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="5" y1="-5" x2="13" y2="-13" stroke="url(#accent)" stroke-width="3" stroke-linecap="round">
+      <animate attributeName="opacity" values="1;0.4;1" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
+    </line>
+    <line x1="-13" y1="13" x2="-5" y2="5" stroke="url(#accent)" stroke-width="3" stroke-linecap="round">
+      <animate attributeName="opacity" values="1;0.4;1" dur="2.5s" begin="1.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="5" y1="5" x2="13" y2="13" stroke="url(#accent)" stroke-width="3" stroke-linecap="round">
+      <animate attributeName="opacity" values="1;0.4;1" dur="2.5s" begin="1.7s" repeatCount="indefinite"/>
+    </line>
+    <!-- الدائرة المركزية -->
+    <circle cx="0" cy="0" r="6" fill="url(#accent)" filter="url(#glow)"/>
+    <circle cx="0" cy="0" r="2.5" fill="#fff"/>
+  </g>
+
+  <!-- ===== النصوص ===== -->
+
+  <!-- خط عمودي فاصل -->
+  <line x1="200" y1="70" x2="200" y2="170" stroke="url(#primary)" stroke-width="1.5" opacity="0.15"/>
+
+  <!-- سند - عربي -->
+  <text x="220" y="125" font-family="'Traditional Arabic', 'Arabic Typesetting', 'Noto Naskh Arabic', serif"
+        font-size="52" font-weight="bold" fill="url(#primary)" filter="url(#shadowLight)">سند</text>
+
+  <!-- SANAD - إنجليزي -->
+  <text x="220" y="155" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="20" font-weight="700" fill="#5f6368" letter-spacing="7">SANAD</text>
+
+  <!-- tagline -->
+  <text x="220" y="175" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+        font-size="10" fill="#9aa0a6" letter-spacing="4">CLEANING SERVICES</text>
+
+  <!-- نقاط تزيينية -->
+  <circle cx="560" cy="80" r="3" fill="url(#accent)" opacity="0.3"/>
+  <circle cx="570" cy="90" r="2" fill="url(#gold)" opacity="0.4"/>
+  <circle cx="555" cy="95" r="1.5" fill="url(#primary)" opacity="0.3"/>
+
+  <circle cx="560" cy="160" r="2" fill="url(#gold)" opacity="0.3"/>
+  <circle cx="570" cy="150" r="1.5" fill="url(#accent)" opacity="0.4"/>
+  <circle cx="555" cy="145" r="3" fill="url(#primary)" opacity="0.25"/>
+
+  <!-- خط سفلي رفيع -->
+  <line x1="220" y1="187" x2="420" y2="187" stroke="url(#accent)" stroke-width="2" opacity="0.3"
+        stroke-linecap="round"/>
+
+</svg>

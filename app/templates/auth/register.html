@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ t.register_title }} - Sanad{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="text-center mb-4 animate-fade-in-up">
+        <img src="/static/images/logo.svg" alt="Sanad" height="48" class="mb-2" loading="lazy">
+        <h4 class="fw-bold">{{ t.register_title }}</h4>
+        <p class="text-secondary small">{{ t.register_subtitle }}</p>
+      </div>
+      <div class="card shadow-lg border-0 animate-fade-in-up stagger-1">
+        <div class="card-body p-4">
+          <form id="registerForm">
+            <div class="mb-3">
+              <label class="form-label">{{ t.register_email }}</label>
+              <input type="email" name="email" class="form-control" required placeholder="{{ t.register_email }}">
+            </div>
+            <div class="row g-2">
+              <div class="col-6 mb-3">
+                <label class="form-label">{{ t.register_first_name }}</label>
+                <input type="text" name="first_name" class="form-control" required placeholder="{{ t.register_first_name }}">
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">{{ t.register_last_name }}</label>
+                <input type="text" name="last_name" class="form-control" required placeholder="{{ t.register_last_name }}">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t.register_phone }}</label>
+              <input type="text" name="phone" class="form-control" required placeholder="09xxxxxxxx">
+            </div>
+            <div class="row g-2">
+              <div class="col-6 mb-3">
+                <label class="form-label">{{ t.register_gender }}</label>
+                <select name="gender" class="form-select" required>
+                  <option value="">{{ t.register_gender_select }}</option>
+                  <option value="ذكر">{{ t.register_male }}</option>
+                  <option value="أنثى">{{ t.register_female }}</option>
+                </select>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">{{ t.register_nationality }}</label>
+                <input type="text" name="nationality" class="form-control" required placeholder="{{ t.register_nationality }}">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t.register_city }}</label>
+              <select name="city" class="form-select" required>
+                <option value="">{{ t.register_city_select }}</option>
+                <option value="دمشق">دمشق</option>
+                <option value="ريف دمشق">ريف دمشق</option>
+                <option value="حلب">حلب</option>
+                <option value="حمص">حمص</option>
+                <option value="حماة">حماة</option>
+                <option value="اللاذقية">اللاذقية</option>
+                <option value="طرطوس">طرطوس</option>
+                <option value="إدلب">إدلب</option>
+                <option value="دير الزور">دير الزور</option>
+                <option value="الرقة">الرقة</option>
+                <option value="الحسكة">الحسكة</option>
+                <option value="درعا">درعا</option>
+                <option value="السويداء">السويداء</option>
+                <option value="القنيطرة">القنيطرة</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t.register_password }}</label>
+              <input type="password" name="password" class="form-control" minlength="6" required placeholder="{{ t.register_password_placeholder }}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t.register_role }}</label>
+              <select name="role" class="form-select" required>
+                <option value="">{{ t.register_role_select }}</option>
+                <option value="worker">{{ t.register_role_worker }}</option>
+                <option value="employer">{{ t.register_role_employer }}</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2">
+              <i class="bi bi-person-plus ms-1"></i>{{ t.register_btn }}
+            </button>
+          </form>
+          <div id="registerError" class="alert alert-danger mt-3 d-none"></div>
+          <div id="registerSuccess" class="alert alert-success mt-3 d-none"></div>
+          <hr class="my-4">
+          <p class="text-center mb-0">
+            {{ t.register_have_account }}
+            <a href="/login" class="fw-bold text-decoration-none">{{ t.register_login_link }}</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const data = {
+    email: form.email.value,
+    password: form.password.value,
+    role: form.role.value,
+    first_name: form.first_name.value,
+    last_name: form.last_name.value,
+    phone: form.phone.value,
+    gender: form.gender.value,
+    nationality: form.nationality.value,
+    city: form.city.value
+  };
+  const btn = form.querySelector('button');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.register_loading }}';
+  try {
+    const controller = new AbortController();
+    const tmr = setTimeout(() => controller.abort(), 20000);
+    const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data), signal: controller.signal });
+    clearTimeout(tmr);
+    const json = await res.json();
+    if (json.success) {
+      document.getElementById('registerSuccess').textContent = '{{ t.register_success }}';
+      document.getElementById('registerSuccess').classList.remove('d-none');
+      setTimeout(() => window.location.href = '/login', 2000);
+    } else {
+      const err = document.getElementById('registerError'); err.textContent = json.message; err.classList.remove('d-none');
+    }
+  } catch(e) {
+    console.error('Register fetch error:', e);
+    alert('{{ t.register_error_connection }}'); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-plus ms-1"></i>{{ t.register_btn }}'; }
+});
+</script>
+{% endblock %}

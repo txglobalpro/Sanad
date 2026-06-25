@@ -1,0 +1,62 @@
+<nav class="navbar navbar-expand-lg" dir="{% if lang == 'ar' %}rtl{% else %}ltr{% endif %}">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <img src="/static/images/logo.svg" alt="Sanad" height="32" class="d-inline-block align-top ms-2">
+      {{ t.site_name }}
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="{{ t.nav_home }}">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="/">{{ t.nav_home }}</a></li>
+        {% if user %}
+          {% if user.role == 'worker' %}
+            <li class="nav-item"><a class="nav-link" href="/worker/dashboard">{{ t.nav_dashboard }}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/worker/jobs">{{ t.nav_jobs }}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/worker/applications">{{ t.nav_applications }}</a></li>
+          {% elif user.role == 'employer' %}
+            <li class="nav-item"><a class="nav-link" href="/employer/dashboard">{{ t.nav_dashboard }}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/employer/post-job">{{ t.nav_post_job }}</a></li>
+          {% elif user.role == 'admin' %}
+            <li class="nav-item"><a class="nav-link" href="/admin/dashboard">{{ t.nav_admin }}</a></li>
+          {% endif %}
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav align-items-lg-center gap-1">
+        <li class="nav-item">
+          <button id="themeToggle" class="btn btn-sm nav-link border-0" aria-label="{{ t.dark_mode }}" style="background:none;">
+            <i class="bi bi-moon-stars"></i>
+          </button>
+        </li>
+        <li class="nav-item">
+          <a id="langToggle" class="nav-link small fw-bold" href="#" data-lang="{% if lang == 'ar' %}en{% else %}ar{% endif %}">
+            {{ t.nav_lang }}
+          </a>
+        </li>
+        {% if user %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" data-bs-toggle="dropdown">
+              <i class="bi bi-person-circle fs-5"></i>
+              <span class="d-none d-lg-inline">{{ user.email[:20] }}{% if user.email|length > 20 %}...{% endif %}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><span class="dropdown-item-text small text-secondary d-flex align-items-center gap-2">
+                <i class="bi bi-wallet2"></i> {{ t.wallet_balance }}: <strong id="walletBalance" class="text-primary">{% if wallet %}{{ wallet.balance }}{% else %}0{% endif %}</strong> ل.س
+              </span></li>
+              <li><hr class="dropdown-divider"></li>
+              {% if user.role == 'worker' %}
+                <li><a class="dropdown-item" href="/worker/profile"><i class="bi bi-person ms-2"></i>{{ t.nav_profile }}</a></li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="/api/auth/logout"><i class="bi bi-box-arrow-left ms-2"></i>{{ t.nav_logout }}</a></li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="/login">{{ t.nav_login }}</a></li>
+          <li class="nav-item"><a class="btn btn-primary btn-sm" href="/register">{{ t.nav_register }}</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

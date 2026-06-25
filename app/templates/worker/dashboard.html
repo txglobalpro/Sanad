@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ t.wd_title }} - Sanad{% endblock %}
+{% block content %}
+<section class="hero-section bg-primary text-white">
+  <div class="container">
+    <div class="d-flex align-items-center gap-3">
+      <div>
+        <h4 class="fw-bold mb-1">{{ t.wd_welcome }}
+          {% if worker.is_approved %}
+            <span class="badge bg-success fs-6 ms-2" style="font-size:0.7rem !important;">
+              <i class="bi bi-patch-check-fill ms-1"></i>{{ t.verified }}
+            </span>
+          {% endif %}
+        </h4>
+        <p class="mb-0 opacity-75">{{ t.wd_subtitle }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    {% if not worker.first_name %}
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+      <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+      <span>{{ t.wd_incomplete }} <a href="/worker/profile" class="alert-link fw-bold">{{ t.wd_incomplete_link }}</a></span>
+    </div>
+    {% endif %}
+    {% if not worker.is_approved %}
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-4" role="alert">
+      <i class="bi bi-info-circle-fill fs-5"></i>
+      <span>{{ t.wd_pending }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Wallet Card -->
+    <div class="row g-4 mb-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm bg-primary text-white" style="border-radius:16px;background:linear-gradient(135deg,#2563eb,#1e40af) !important;">
+          <div class="card-body p-4 d-flex justify-content-between align-items-center">
+            <div>
+              <small class="opacity-75">{{ t.wallet_balance }}</small>
+              <h3 class="fw-bold mb-0" style="font-size:1.8rem;"><span id="walletBalance">{{ wallet.balance if wallet else 0 }}</span> ل.س</h3>
+            </div>
+            <div class="d-flex flex-column align-items-end gap-2">
+              <i class="bi bi-wallet2" style="font-size:2.5rem;opacity:0.5;"></i>
+              <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#depositModal">
+                <i class="bi bi-plus-circle ms-1"></i>{{ t.wallet_deposit_btn }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div class="modal fade" id="depositModal" tabindex="-1">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h6 class="modal-title fw-bold">{{ t.wallet_deposit_modal_title }}</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <form id="depositForm">
+            <div class="modal-body">
+              <label class="form-label">{{ t.wallet_deposit_label }}</label>
+              <input type="number" name="amount" class="form-control" min="1" required placeholder="{{ t.wallet_deposit_placeholder }}">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ t.cancel }}</button>
+              <button type="submit" class="btn btn-primary btn-sm">{{ t.wallet_deposit_btn }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-card text-center">
+          <div class="icon-circle" style="background:var(--primary-50);color:var(--primary);">
+            <i class="bi bi-briefcase fs-3"></i>
+          </div>
+          <h5>{{ t.wd_jobs_card }}</h5>
+          <p>{{ t.wd_jobs_desc }}</p>
+          <a href="/worker/jobs" class="btn btn-primary btn-sm w-100 mt-2">{{ t.wd_jobs_btn }}</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card text-center">
+          <div class="icon-circle" style="background:#ecfdf5;color:var(--secondary);">
+            <i class="bi bi-file-text fs-3"></i>
+          </div>
+          <h5>{{ t.wd_apps_card }}</h5>
+          <p>{{ t.wd_apps_desc }}</p>
+          <a href="/worker/applications" class="btn btn-success btn-sm w-100 mt-2">{{ t.wd_apps_btn }}</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card text-center">
+          <div class="icon-circle" style="background:#fffbeb;color:var(--accent);">
+            <i class="bi bi-person fs-3"></i>
+          </div>
+          <h5>{{ t.wd_profile_card }}</h5>
+          <p>{{ t.wd_profile_desc }}</p>
+          <a href="/worker/profile" class="btn btn-warning btn-sm w-100 mt-2">{{ t.wd_profile_btn }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('depositForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>';
+  const fd = new FormData(e.target);
+  try {
+    const res = await fetch('/api/wallet/deposit', { method:'POST', body: fd });
+    const json = await res.json();
+    if (json.success) {
+      document.getElementById('walletBalance').textContent = json.balance;
+      const modal = bootstrap.Modal.getInstance(document.getElementById('depositModal'));
+      if (modal) modal.hide();
+      alert('{{ t.wallet_deposit_success }}');
+    } else { alert(json.message); }
+  } catch(e) { alert('{{ t.error_connection }}'); }
+  finally { btn.disabled = false; btn.innerHTML = '{{ t.wallet_deposit_btn }}'; }
+});
+</script>
+{% endblock %}

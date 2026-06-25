@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{% if lang == 'ar' %}rtl{% else %}ltr{% endif %}" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" id="themeColor" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sanad">
+    <link rel="manifest" href="/static/manifest.json">
+    <title>{% block title %}Sanad{% endblock %}</title>
+    <meta name="description" content="{% block meta_desc %}Sanad{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}Sanad{% endblock %}">
+    <meta property="og:description" content="{% block og_desc %}{{ t.hero_subtitle }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}/static/images/logo.svg{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" type="image/svg+xml" href="/static/images/logo.svg">
+    <link rel="apple-touch-icon" href="/static/images/logo.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{% if lang == 'ar' %}https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css{% else %}https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css{% endif %}" rel="stylesheet" id="bootstrapCSS">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Install Banner -->
+    <div id="installBanner" class="install-banner d-none">
+        <div class="install-banner-content">
+            <img src="/static/images/logo.svg" alt="Sanad" height="36" class="install-icon">
+            <div class="install-text">
+                <strong>{{ t.install_title }}</strong>
+                <small>{{ t.install_subtitle }}</small>
+            </div>
+            <button id="installBtn" class="btn btn-warning btn-sm install-btn px-3">
+                <i class="bi bi-download ms-1"></i>{{ t.install_btn }}
+            </button>
+            <button id="installClose" class="btn-close btn-close-white install-close"></button>
+        </div>
+    </div>
+
+    <!-- Notification Banner -->
+    <div id="notifBanner" class="notif-banner d-none">
+        <div class="notif-banner-content">
+            <i class="bi bi-bell-fill notif-icon"></i>
+            <div class="notif-text">
+                <strong>{{ t.notif_title }}</strong>
+                <small>{{ t.notif_subtitle }}</small>
+            </div>
+            <button id="notifAllowBtn" class="btn btn-warning btn-sm notif-btn px-3">
+                <i class="bi bi-check-lg ms-1"></i>{{ t.notif_allow }}
+            </button>
+            <button id="notifLaterBtn" class="btn btn-sm notif-later-btn px-2">
+                {{ t.notif_later }}
+            </button>
+        </div>
+    </div>
+
+    {% include "components/navbar.html" %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    {% include "components/footer.html" %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="/static/js/main.js"></script>
+    <script>
+    // ===== Dark Mode =====
+    (function() {
+        const html = document.documentElement;
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark') {
+            html.setAttribute('data-theme', 'dark');
+            document.getElementById('themeColor').content = '#0f172a';
+        }
+    })();
+
+    // ===== Language Switcher =====
+    document.addEventListener('DOMContentLoaded', () => {
+        const langBtn = document.getElementById('langToggle');
+        if (langBtn) {
+            langBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = langBtn.getAttribute('data-lang');
+                window.location.href = '/api/set-lang/' + target;
+            });
+        }
+    });
+
+    // ===== Install Prompt =====
+    let deferredPrompt = null;
+    const installBanner = document.getElementById('installBanner');
+    const installBtn = document.getElementById('installBtn');
+    const installClose = document.getElementById('installClose');
+
+    window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (window.innerWidth < 992) {
+            installBanner.classList.remove('d-none');
+            installBanner.classList.add('d-flex');
+        }
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        if (result.outcome === 'accepted') {
+            installBanner.classList.add('d-none');
+        }
+        deferredPrompt = null;
+    });
+
+    installClose.addEventListener('click', () => {
+        installBanner.classList.add('d-none');
+    });
+
+    // ===== Service Worker =====
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js');
+    }
+
+    // ===== Fallback Install iOS =====
+    (function() {
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        if ((isSafari || isIOS) && !isStandalone && window.innerWidth < 992) {
+            setTimeout(() => {
+                if (installBanner.classList.contains('d-none')) {
+                    installBanner.classList.remove('d-none');
+                    installBanner.classList.add('d-flex');
+                    installBtn.textContent = '{{ t.install_btn }}';
+                    installBtn.onclick = () => {
+                        installBanner.classList.add('d-none');
+                        const msg = '{% if lang == "ar" %}للتثبيت: اضغط على زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"{% else %}To install: tap the Share button, then "Add to Home Screen"{% endif %}';
+                        alert(msg);
+                    };
+                }
+            }, 3000);
+        }
+    })();
+
+    // ===== Notification Prompt =====
+    (function() {
+        const notifBanner = document.getElementById('notifBanner');
+        const notifAllow = document.getElementById('notifAllowBtn');
+        const notifLater = document.getElementById('notifLaterBtn');
+
+        if (!('Notification' in window)) return;
+        if (Notification.permission === 'granted') return;
+        if (Notification.permission === 'denied') return;
+        if (localStorage.getItem('notifLater') === 'true') return;
+
+        setTimeout(() => {
+            if (window.innerWidth < 992) {
+                notifBanner.classList.remove('d-none');
+                notifBanner.classList.add('d-flex');
+            }
+        }, 5000);
+
+        notifAllow.addEventListener('click', () => {
+            Notification.requestPermission().then(perm => {
+                if (perm === 'granted') {
+                    new Notification('Sanad', {
+                        body: '{% if lang == "ar" %}أشعارات مفعلة! سنخبرك بفرص العمل الجديدة فور ظهورها.{% else %}Notifications enabled! We\'ll alert you of new job opportunities.{% endif %}',
+                        icon: '/static/images/logo.svg'
+                    });
+                }
+                notifBanner.classList.add('d-none');
+            });
+        });
+
+        notifLater.addEventListener('click', () => {
+            localStorage.setItem('notifLater', 'true');
+            notifBanner.classList.add('d-none');
+        });
+    })();
+
+    // ===== Scroll Navbar =====
+    document.addEventListener('DOMContentLoaded', () => {
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            window.addEventListener('scroll', () => {
+                navbar.classList.toggle('scrolled', window.scrollY > 10);
+            });
+        }
+    });
+
+    // ===== Dark Mode Toggle =====
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const meta = document.getElementById('themeColor');
+        if (!toggle) return;
+        toggle.addEventListener('click', () => {
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                html.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                if (meta) meta.content = '#2563eb';
+                toggle.innerHTML = '<i class="bi bi-moon-stars"></i>';
+                toggle.setAttribute('aria-label', '{{ t.dark_mode }}');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                if (meta) meta.content = '#0f172a';
+                toggle.innerHTML = '<i class="bi bi-sun"></i>';
+                toggle.setAttribute('aria-label', '{{ t.light_mode }}');
+            }
+        });
+        // Sync icon on load
+        if (html.getAttribute('data-theme') === 'dark') {
+            toggle.innerHTML = '<i class="bi bi-sun"></i>';
+            toggle.setAttribute('aria-label', '{{ t.light_mode }}');
+        }
+    });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

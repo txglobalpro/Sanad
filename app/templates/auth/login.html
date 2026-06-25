@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ t.login_title }} - Sanad{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+      <div class="text-center mb-4 animate-fade-in-up">
+        <img src="/static/images/logo.svg" alt="Sanad" height="48" class="mb-2" loading="lazy">
+        <h4 class="fw-bold">{{ t.login_title }}</h4>
+        <p class="text-secondary small">{{ t.login_subtitle }}</p>
+      </div>
+      <div class="card shadow-lg border-0 animate-fade-in-up stagger-1">
+        <div class="card-body p-4">
+          <form id="loginForm">
+            <div class="mb-3">
+              <label class="form-label">{{ t.login_email }}</label>
+              <input type="email" name="email" class="form-control" required placeholder="{{ t.login_email }}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t.login_password }}</label>
+              <input type="password" name="password" class="form-control" required placeholder="{{ t.login_password }}">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2">
+              <i class="bi bi-box-arrow-in-left ms-1"></i>{{ t.login_btn }}
+            </button>
+          </form>
+          <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
+          <hr class="my-4">
+          <p class="text-center mb-0">
+            {{ t.login_no_account }}
+            <a href="/register" class="fw-bold text-decoration-none">{{ t.login_register_link }}</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const data = { email: form.email.value, password: form.password.value };
+  const btn = form.querySelector('button');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.login_loading }}';
+  try {
+    const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+    const json = await res.json();
+    if (json.success) { window.location.href = json.redirect; }
+    else { const err = document.getElementById('loginError'); err.textContent = json.message; err.classList.remove('d-none'); }
+  } catch(e) { alert('{{ t.login_error_connection }}'); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-left ms-1"></i>{{ t.login_btn }}'; }
+});
+</script>
+{% endblock %}

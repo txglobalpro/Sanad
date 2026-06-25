@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}404 - Sanad{% endblock %}
+{% block content %}
+<section class="section-padding">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6 text-center animate-fade-in-up">
+        <div class="display-1 fw-bold text-primary mb-3" style="font-size:6rem;line-height:1;">404</div>
+        <h3 class="fw-bold mb-3">{{ t["404_title"] }}</h3>
+        <p class="text-secondary mb-4">{{ t["404_desc"] }}</p>
+        <a href="/" class="btn btn-primary btn-lg px-4">
+          <i class="bi bi-house ms-2"></i>{{ t["404_btn"] }}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
