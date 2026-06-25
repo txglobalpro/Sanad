@@ -14,6 +14,7 @@
           {% if user.role == 'worker' %}
             <li class="nav-item"><a class="nav-link" href="/worker/dashboard">{{ t.nav_dashboard }}</a></li>
             <li class="nav-item"><a class="nav-link" href="/worker/jobs">{{ t.nav_jobs }}</a></li>
+            <li class="nav-item"><a class="nav-link" href="/worker/saved-jobs"><i class="bi bi-bookmark ms-1"></i>{{ t.wsj_title }}</a></li>
             <li class="nav-item"><a class="nav-link" href="/worker/applications">{{ t.nav_applications }}</a></li>
           {% elif user.role == 'employer' %}
             <li class="nav-item"><a class="nav-link" href="/employer/dashboard">{{ t.nav_dashboard }}</a></li>

@@ -1,28 +1,19 @@
 {% extends "base.html" %}
-{% block title %}{{ t.wj_title }} - Sanad{% endblock %}
+{% block title %}{{ t.wsj_title }} - Sanad{% endblock %}
 {% block content %}
 <section class="hero-section bg-primary text-white">
   <div class="container">
-    <h4 class="fw-bold mb-1">{{ t.wj_title }}</h4>
-    <p class="mb-0 opacity-75">{{ t.wj_subtitle }} <span class="fw-bold">{{ worker.city }}</span></p>
+    <h4 class="fw-bold mb-1">{{ t.wsj_title }}</h4>
+    <p class="mb-0 opacity-75">{{ t.wsj_subtitle }}</p>
   </div>
 </section>
 
 <section class="section-padding">
   <div class="container">
-    <div class="row mb-4">
-      <div class="col-md-6">
-        <select id="workTypeFilter" class="form-select" onchange="filterJobs()">
-          <option value="">{{ t.search }}</option>
-          {% for wt in work_types %}
-          <option value="{{ wt }}">{{ wt }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-    {% if jobs %}
-    <div class="row g-3" id="jobsContainer">
-      {% for job in jobs %}
+    {% if saved_jobs %}
+    <div class="row g-3" id="savedJobsContainer">
+      {% for item in saved_jobs %}
+      {% set job = item.jobs %}
       <div class="col-md-6 col-lg-4 animate-fade-in-up stagger-{{ loop.index0 % 4 + 1 }}">
         <div class="job-card">
           <h5 class="job-title">{{ job.title }}</h5>
@@ -39,8 +30,8 @@
             <a href="/worker/jobs/{{ job.id }}" class="btn btn-outline-primary btn-sm flex-grow-1">
               <i class="bi bi-eye ms-1"></i>{{ t.wj_view_details }}
             </a>
-            <button class="btn btn-sm btn-outline-secondary save-job-btn" data-job-id="{{ job.id }}" onclick="toggleSaveJob(this)">
-              <i class="bi bi-bookmark"></i>
+            <button class="btn btn-sm btn-warning save-job-btn" data-job-id="{{ job.id }}" onclick="toggleSaveJob(this)">
+              <i class="bi bi-bookmark-fill"></i>
             </button>
           </div>
         </div>
@@ -49,9 +40,9 @@
     </div>
     {% else %}
     <div class="empty-state text-center">
-      <i class="bi bi-search"></i>
-      <h5>{{ t.wj_empty_title }}</h5>
-      <p>{{ t.wj_empty_desc }}</p>
+      <i class="bi bi-bookmark"></i>
+      <h5>{{ t.wsj_empty_title }}</h5>
+      <a href="/worker/jobs" class="btn btn-primary mt-2">{{ t.wsj_empty_btn }}</a>
     </div>
     {% endif %}
   </div>
@@ -59,14 +50,6 @@
 {% endblock %}
 {% block extra_js %}
 <script>
-function filterJobs() {
-  const filter = document.getElementById('workTypeFilter').value;
-  const cards = document.querySelectorAll('#jobsContainer .col-md-6');
-  cards.forEach(card => {
-    const tag = card.querySelector('.tag');
-    card.style.display = (!filter || (tag && tag.textContent.trim() === filter)) ? '' : 'none';
-  });
-}
 async function toggleSaveJob(btn) {
   const jobId = btn.getAttribute('data-job-id');
   btn.disabled = true;
@@ -74,9 +57,14 @@ async function toggleSaveJob(btn) {
     const res = await fetch('/api/worker/save-job/' + jobId, { method: 'POST' });
     const json = await res.json();
     if (json.success) {
-      btn.innerHTML = json.saved ? '<i class="bi bi-bookmark-fill"></i>' : '<i class="bi bi-bookmark"></i>';
-      btn.classList.toggle('btn-warning', json.saved);
-      btn.classList.toggle('btn-outline-secondary', !json.saved);
+      if (!json.saved) {
+        const card = btn.closest('.col-md-6');
+        if (card) card.remove();
+        const container = document.getElementById('savedJobsContainer');
+        if (container && !container.querySelectorAll('.col-md-6').length) {
+          location.reload();
+        }
+      }
     }
   } catch(e) {}
   btn.disabled = false;

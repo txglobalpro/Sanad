@@ -882,6 +882,64 @@ a:hover { color: var(--primary-dark); }
   background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%) !important;
 }
 
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+  border-color: var(--dark-200);
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1) brightness(200%);
+}
+
+[data-theme="dark"] .install-banner {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%) !important;
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .wallet-card,
+[data-theme="dark"] .card[style*="linear-gradient"] {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%) !important;
+}
+
+[data-theme="dark"] .tag {
+  background: var(--dark-200);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .tag-success {
+  background: #064e3b;
+  color: #34d399;
+}
+
+[data-theme="dark"] .icon-circle {
+  background: var(--dark-200) !important;
+}
+
+[data-theme="dark"] .carousel-control-prev-icon,
+[data-theme="dark"] .carousel-control-next-icon {
+  filter: invert(1);
+}
+
+[data-theme="dark"] .carousel-indicators button {
+  background-color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .badge {
+  color: var(--white);
+}
+
+[data-theme="dark"] .empty-state i {
+  color: var(--dark-400) !important;
+}
+
+[data-theme="dark"] .empty-state h5 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .empty-state p {
+  color: var(--text-secondary);
+}
+
 /* ===== Notification Banner ===== */
 .notif-banner {
   position: fixed;

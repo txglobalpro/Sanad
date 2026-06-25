@@ -15,76 +15,66 @@
           </div>
         </div>
 
-        <form id="jobForm">
+        <form id="jobForm" {% if job %}action="/api/employer/job/{{ job.id }}/update"{% else %}action="/api/employer/job"{% endif %}>
+          {% if job %}<input type="hidden" name="job_id" value="{{ job.id }}">{% endif %}
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label">{{ t.ep_job_title }}</label>
-              <input type="text" name="title" class="form-control" required placeholder="{{ t.ep_job_title_placeholder }}">
+              <input type="text" name="title" class="form-control" required placeholder="{{ t.ep_job_title_placeholder }}" {% if job %}value="{{ job.title }}"{% endif %}>
             </div>
             <div class="col-12">
               <label class="form-label">{{ t.ep_description }} <span class="text-muted">{{ t.ep_optional }}</span></label>
-              <textarea name="description" class="form-control" rows="3" placeholder="{{ t.ep_description_placeholder }}"></textarea>
+              <textarea name="description" class="form-control" rows="3" placeholder="{{ t.ep_description_placeholder }}">{% if job %}{{ job.description }}{% endif %}</textarea>
             </div>
             <div class="col-md-4">
               <label class="form-label">{{ t.ep_work_type }}</label>
               <select name="work_type" class="form-select" required>
                 <option value="">{{ t.ep_select }}</option>
-                <option value="بناء وصيانة">بناء وصيانة</option>
-                <option value="تنظيف">تنظيف</option>
-                <option value="نقل وتوصيل">نقل وتوصيل</option>
-                <option value="مطاعم وضيافة">مطاعم وضيافة</option>
-                <option value="حدائق وزراعة">حدائق وزراعة</option>
-                <option value="دهان وديكور">دهان وديكور</option>
-                <option value="كهرباء">كهرباء</option>
-                <option value="سباكة">سباكة</option>
-                <option value="نجارة">نجارة</option>
-                <option value="حدادة">حدادة</option>
-                <option value="حراسة وأمن">حراسة وأمن</option>
-                <option value="سائق">سائق</option>
-                <option value="أعمال مكتبية">أعمال مكتبية</option>
-                <option value="أخرى">أخرى</option>
+                {% for wt in work_types %}
+                <option value="{{ wt }}" {% if job and job.work_type == wt %}selected{% endif %}>{{ wt }}</option>
+                {% endfor %}
               </select>
             </div>
             <div class="col-md-4">
               <label class="form-label">{{ t.ep_duration }}</label>
               <select name="duration" class="form-select" required>
                 <option value="">{{ t.ep_select }}</option>
-                <option value="ساعة واحدة">ساعة واحدة</option>
-                <option value="2-3 ساعات">2-3 ساعات</option>
-                <option value="نصف يوم">نصف يوم</option>
-                <option value="يوم كامل">يوم كامل</option>
-                <option value="أكثر من يوم">أكثر من يوم</option>
-                <option value="حسب الاتفاق">حسب الاتفاق</option>
+                <option value="ساعة واحدة" {% if job and job.duration == "ساعة واحدة" %}selected{% endif %}>ساعة واحدة</option>
+                <option value="2-3 ساعات" {% if job and job.duration == "2-3 ساعات" %}selected{% endif %}>2-3 ساعات</option>
+                <option value="نصف يوم" {% if job and job.duration == "نصف يوم" %}selected{% endif %}>نصف يوم</option>
+                <option value="يوم كامل" {% if job and job.duration == "يوم كامل" %}selected{% endif %}>يوم كامل</option>
+                <option value="أكثر من يوم" {% if job and job.duration == "أكثر من يوم" %}selected{% endif %}>أكثر من يوم</option>
+                <option value="حسب الاتفاق" {% if job and job.duration == "حسب الاتفاق" %}selected{% endif %}>حسب الاتفاق</option>
               </select>
             </div>
             <div class="col-md-4">
               <label class="form-label">{{ t.ep_pay }} <span class="text-muted">(ل.س)</span></label>
-              <input type="number" name="pay" class="form-control" required min="1" placeholder="{{ t.ep_pay_placeholder }}">
+              <input type="number" name="pay" class="form-control" required min="1" placeholder="{{ t.ep_pay_placeholder }}" {% if job %}value="{{ job.pay }}"{% endif %}>
             </div>
             <div class="col-md-4">
               <label class="form-label">{{ t.wjd_phone }}</label>
-              <input type="text" name="phone" class="form-control" required placeholder="09xxxxxxxx">
+              <input type="text" name="phone" class="form-control" required placeholder="09xxxxxxxx" {% if job %}value="{{ job.phone }}"{% endif %}>
             </div>
             <div class="col-md-4">
               <label class="form-label">{{ t.register_city }}</label>
               <select name="city" class="form-select" required>
                 <option value="">{{ t.ep_select }}</option>
                 {% for city in cities %}
-                <option value="{{ city }}">{{ city }}</option>
+                <option value="{{ city }}" {% if job and job.city == city %}selected{% endif %}>{{ city }}</option>
                 {% endfor %}
               </select>
             </div>
             <div class="col-md-4">
               <label class="form-label">{{ t.wjd_address }}</label>
-              <input type="text" name="address" class="form-control" required placeholder="{{ t.ep_address_placeholder }}">
+              <input type="text" name="address" class="form-control" required placeholder="{{ t.ep_address_placeholder }}" {% if job %}value="{{ job.address }}"{% endif %}>
             </div>
             <div class="col-12">
               <label class="form-label">{{ t.wjd_notes }} <span class="text-muted">{{ t.ep_optional }}</span></label>
-              <textarea name="notes" class="form-control" rows="2"></textarea>
+              <textarea name="notes" class="form-control" rows="2">{% if job %}{{ job.notes }}{% endif %}</textarea>
             </div>
           </div>
           <button type="submit" class="btn btn-success mt-4 px-5 py-2">
-            <i class="bi bi-send ms-1"></i>{{ t.ep_submit_btn }}
+            <i class="bi bi-send ms-1"></i>{% if job %}{{ t.ep_update_btn }}{% else %}{{ t.ep_submit_btn }}{% endif %}
           </button>
         </form>
         <div id="jobMsg" class="mt-3"></div>
@@ -100,9 +90,11 @@ document.getElementById('jobForm').addEventListener('submit', async (e) => {
   const form = e.target;
   const fd = new FormData(form);
   const btn = form.querySelector('button');
+  const action = form.getAttribute('action');
+  const isEdit = form.querySelector('input[name="job_id"]');
   btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.ep_publishing }}';
   try {
-    const res = await fetch('/api/employer/job', { method:'POST', body: fd });
+    const res = await fetch(action, { method:'POST', body: fd });
     const json = await res.json();
     const msg = document.getElementById('jobMsg');
     if (json.success) {
@@ -111,7 +103,7 @@ document.getElementById('jobForm').addEventListener('submit', async (e) => {
       setTimeout(() => window.location.href = '/employer/dashboard', 1500);
     } else { msg.innerHTML = '<div class="alert alert-danger d-flex align-items-center gap-2"><i class="bi bi-x-circle-fill"></i>'+json.message+'</div>'; }
   } catch(e) { alert('{{ t.error_connection }}'); }
-  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-send ms-1"></i>{{ t.ep_submit_btn }}'; }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-send ms-1"></i>' + (isEdit ? '{{ t.ep_update_btn }}' : '{{ t.ep_submit_btn }}'); }
 });
 </script>
 {% endblock %}

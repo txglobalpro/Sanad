@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sanad-job.onrender.com/sitemap.xml

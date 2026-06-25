@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ t.server_error_title if t is defined else "خطأ في الخادم" }} - Sanad{% endblock %}
+{% block content %}
+<div class="container py-5 text-center" style="min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+  <i class="bi bi-exclamation-triangle" style="font-size:4rem;color:var(--accent);opacity:0.5;"></i>
+  <h2 class="fw-bold mt-3">{{ t.server_error_title if t is defined else "خطأ في الخادم" }}</h2>
+  <p class="text-muted">{{ t.server_error_desc if t is defined else "حدث خطأ غير متوقع، يرجى المحاولة لاحقاً" }}</p>
+  <a href="/" class="btn btn-primary mt-3"><i class="bi bi-house ms-1"></i>{{ t.server_error_btn if t is defined else "العودة للرئيسية" }}</a>
+</div>
+{% endblock %}

@@ -24,9 +24,23 @@
                   <div><i class="bi bi-geo-alt ms-1"></i>{{ app.workers.city or t.ea_city_unknown }}</div>
                   <div><i class="bi bi-calendar ms-1"></i>{{ t.ea_age_label }} {{ app.workers.age or t.ea_city_unknown }}</div>
                 </div>
-                <span class="badge {% if app.status == 'pending' %}bg-warning{% elif app.status == 'accepted' %}bg-success{% else %}bg-danger{% endif %}">
-                  {% if app.status == 'pending' %}{{ t.wa_status_pending }}{% elif app.status == 'accepted' %}{{ t.wa_status_accepted }}{% else %}{{ t.wa_status_rejected }}{% endif %}
-                </span>
+                <div class="d-flex align-items-center gap-2 flex-wrap mt-2" id="app-actions-{{ app.id }}">
+                  {% if app.status == 'pending' %}
+                  <span class="badge bg-warning">{{ t.wa_status_pending }}</span>
+                  <button class="btn btn-success btn-sm btn-accept" data-app-id="{{ app.id }}" onclick="handleApplication('{{ app.id }}', 'accept')">
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    <span class="btn-text">{{ t.ea_accept }}</span>
+                  </button>
+                  <button class="btn btn-danger btn-sm btn-reject" data-app-id="{{ app.id }}" onclick="handleApplication('{{ app.id }}', 'reject')">
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    <span class="btn-text">{{ t.ea_reject }}</span>
+                  </button>
+                  {% elif app.status == 'accepted' %}
+                  <span class="badge bg-success">{{ t.ea_accepted }}</span>
+                  {% else %}
+                  <span class="badge bg-danger">{{ t.ea_rejected }}</span>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>
@@ -43,4 +57,32 @@
     </div>
   </div>
 </section>
+<script>
+function handleApplication(appId, action) {
+  const container = document.getElementById('app-actions-' + appId);
+  const buttons = container.querySelectorAll('button');
+  buttons.forEach(b => b.disabled = true);
+  const spinners = container.querySelectorAll('.spinner-border');
+  spinners.forEach(s => s.classList.remove('d-none'));
+
+  fetch('/api/employer/' + action + '-application/' + appId, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const badgeClass = action === 'accept' ? 'bg-success' : 'bg-danger';
+        const badgeText = action === 'accept' ? '{{ t.ea_accepted }}' : '{{ t.ea_rejected }}';
+        container.innerHTML = '<span class="badge ' + badgeClass + '">' + badgeText + '</span>';
+      } else {
+        buttons.forEach(b => b.disabled = false);
+        spinners.forEach(s => s.classList.add('d-none'));
+        alert(data.message || '{{ t.error_connection }}');
+      }
+    })
+    .catch(() => {
+      buttons.forEach(b => b.disabled = false);
+      spinners.forEach(s => s.classList.add('d-none'));
+      alert('{{ t.error_connection }}');
+    });
+}
+</script>
 {% endblock %}

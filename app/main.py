@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Depends, HTTPException, UploadFile, File, Form
-from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from jinja2 import Environment, FileSystemLoader
@@ -43,11 +43,25 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 async def not_found(request, exc):
     return render_template(request, "errors/404.html")
 
+@app.exception_handler(500)
+async def server_error(request, exc):
+    return render_template(request, "errors/500.html")
+
+@app.get("/sitemap.xml", response_class=Response, media_type="application/xml")
+async def sitemap():
+    return """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://sanad-job.onrender.com/</loc><priority>1.0</priority></url>
+  <url><loc>https://sanad-job.onrender.com/login</loc><priority>0.6</priority></url>
+  <url><loc>https://sanad-job.onrender.com/register</loc><priority>0.8</priority></url>
+</urlset>"""
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "message": "Sanad is running"}
 
 CITIES = ["دمشق", "حلب", "حمص", "حماة", "اللاذقية", "طرطوس", "إدلب", "دير الزور", "الرقة", "الحسكة", "درعا", "السويداء", "القنيطرة", "ريف دمشق"]
+WORK_TYPES = ["بناء وصيانة", "نظافة وخدمات منزلية", "توصيل وشحن", "سائق", "كهرباء", "سباكة", "نجارة", "حدادة و لحام", "دهان و ديكور", "تبريد و تكييف", "حدائق و زراعة", "حرف يدوية", "حراسة و أمن", "أخرى"]
 
 def create_token(data: dict):
     to_encode = data.copy()
@@ -233,7 +247,7 @@ async def worker_jobs(request: Request):
     if not worker.get("is_approved"):
         return render_template(request, "worker/pending.html", user=user)
     jobs = supabase.table("jobs").select("*").eq("city", worker["city"]).eq("status", "open").order("created_at", desc=True).execute()
-    return render_template(request, "worker/jobs.html", user=user, jobs=jobs.data, worker=worker)
+    return render_template(request, "worker/jobs.html", user=user, jobs=jobs.data, worker=worker, work_types=WORK_TYPES)
 
 @app.get("/worker/jobs/{job_id}", response_class=HTMLResponse)
 async def job_details(request: Request, job_id: str):
@@ -257,6 +271,34 @@ async def apply_job(request: Request, job_id: str):
         "job_id": job_id, "worker_id": profile["data"]["id"], "status": "pending"
     }).execute()
     return {"success": True, "message": "تم التقديم على الفرصة بنجاح"}
+
+@app.post("/api/worker/save-job/{job_id}")
+async def save_job(request: Request, job_id: str):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "worker": raise HTTPException(403)
+    try:
+        existing = supabase_admin.table("saved_jobs").select("*").eq("worker_id", profile["data"]["id"]).eq("job_id", job_id).execute()
+        if existing.data:
+            supabase_admin.table("saved_jobs").delete().eq("worker_id", profile["data"]["id"]).eq("job_id", job_id).execute()
+            return {"success": True, "saved": False, "message": "تم إزالة الإعجاب"}
+        supabase_admin.table("saved_jobs").insert({"worker_id": profile["data"]["id"], "job_id": job_id}).execute()
+        return {"success": True, "saved": True, "message": "تم حفظ الفرصة"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.get("/worker/saved-jobs", response_class=HTMLResponse)
+async def saved_jobs_page(request: Request):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "worker": return RedirectResponse("/", status_code=302)
+    worker = profile["data"]
+    if not worker.get("is_approved"):
+        return render_template(request, "worker/pending.html", user=user)
+    saved = supabase_admin.table("saved_jobs").select("*, jobs(*)").eq("worker_id", worker["id"]).order("created_at", desc=True).execute()
+    return render_template(request, "worker/saved_jobs.html", user=user, saved_jobs=saved.data, worker=worker)
 
 @app.get("/worker/applications", response_class=HTMLResponse)
 async def my_applications(request: Request):
@@ -285,7 +327,7 @@ async def post_job_page(request: Request):
     if not user: return RedirectResponse("/login", status_code=302)
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
-    return render_template(request, "employer/post_job.html", user=user, cities=CITIES)
+    return render_template(request, "employer/post_job.html", user=user, cities=CITIES, work_types=WORK_TYPES)
 
 @app.post("/api/employer/job")
 async def create_job(request: Request, title: str = Form(...), description: str = Form(""), work_type: str = Form(...), duration: str = Form(...), pay: float = Form(...), phone: str = Form(...), address: str = Form(...), city: str = Form(...), notes: str = Form("")):
@@ -303,6 +345,44 @@ async def create_job(request: Request, title: str = Form(...), description: str 
     except Exception as e:
         return JSONResponse({"success": False, "message": str(e)}, status_code=400)
 
+@app.post("/api/employer/job/{job_id}/delete")
+async def delete_job(request: Request, job_id: str):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": raise HTTPException(403)
+    try:
+        supabase_admin.table("jobs").delete().eq("id", job_id).eq("employer_id", profile["data"]["id"]).execute()
+        return {"success": True, "message": "تم حذف فرصة العمل"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.get("/employer/edit-job/{job_id}", response_class=HTMLResponse)
+async def edit_job_page(request: Request, job_id: str):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
+    job = supabase.table("jobs").select("*").eq("id", job_id).eq("employer_id", profile["data"]["id"]).single().execute()
+    if not job.data: return RedirectResponse("/employer/dashboard", status_code=302)
+    return render_template(request, "employer/post_job.html", user=user, job=job.data, work_types=WORK_TYPES, cities=CITIES)
+
+@app.post("/api/employer/job/{job_id}/update")
+async def update_job(request: Request, job_id: str, title: str = Form(...), description: str = Form(""), work_type: str = Form(...), duration: str = Form(...), pay: float = Form(...), phone: str = Form(...), address: str = Form(...), city: str = Form(...), notes: str = Form("")):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": raise HTTPException(403)
+    try:
+        supabase_admin.table("jobs").update({
+            "title": title, "description": description, "work_type": work_type,
+            "duration": duration, "pay": pay, "phone": phone,
+            "address": address, "city": city, "notes": notes
+        }).eq("id", job_id).eq("employer_id", profile["data"]["id"]).execute()
+        return {"success": True, "message": "تم تحديث فرصة العمل"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
 @app.get("/employer/jobs/{job_id}/applicants", response_class=HTMLResponse)
 async def view_applicants(request: Request, job_id: str):
     user = await get_current_user(request)
@@ -311,6 +391,34 @@ async def view_applicants(request: Request, job_id: str):
     if not job.data: return RedirectResponse("/employer/dashboard", status_code=302)
     apps = supabase.table("applications").select("*, workers(*)").eq("job_id", job_id).execute()
     return render_template(request, "employer/applicants.html", user=user, job=job.data, applications=apps.data)
+
+@app.post("/api/employer/accept-application/{application_id}")
+async def accept_application(request: Request, application_id: str):
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer":
+        raise HTTPException(403)
+    try:
+        supabase_admin.table("applications").update({"status": "accepted"}).eq("id", application_id).execute()
+        return {"success": True, "message": "تم قبول المتقدم"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.post("/api/employer/reject-application/{application_id}")
+async def reject_application(request: Request, application_id: str):
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer":
+        raise HTTPException(403)
+    try:
+        supabase_admin.table("applications").update({"status": "rejected"}).eq("id", application_id).execute()
+        return {"success": True, "message": "تم رفض المتقدم"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
 
 # ==================== Admin Routes ====================
 
@@ -322,7 +430,13 @@ async def admin_dashboard(request: Request):
         return RedirectResponse("/", status_code=302)
     workers = supabase.table("workers").select("*").order("created_at", desc=True).execute()
     jobs = supabase.table("jobs").select("*").order("created_at", desc=True).execute()
-    return render_template(request, "admin/dashboard.html", user=user, workers=workers.data, jobs=jobs.data)
+    employers = supabase.table("employers").select("*").order("created_at", desc=True).execute()
+    applications = supabase.table("applications").select("*").execute()
+    total_workers = len(workers.data)
+    total_employers = len(employers.data)
+    total_jobs = len(jobs.data)
+    total_applications = len(applications.data)
+    return render_template(request, "admin/dashboard.html", user=user, workers=workers.data, jobs=jobs.data, employers=employers.data, total_workers=total_workers, total_employers=total_employers, total_jobs=total_jobs, total_applications=total_applications)
 
 @app.post("/api/admin/approve-worker/{worker_id}")
 async def approve_worker(request: Request, worker_id: str):
@@ -378,6 +492,16 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
   type TEXT NOT NULL CHECK (type IN ('deposit','withdrawal','payment','refund')),
   description TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+"""
+
+CREATE_SAVED_JOBS_SQL = """
+CREATE TABLE IF NOT EXISTS saved_jobs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  worker_id UUID REFERENCES workers(id),
+  job_id UUID REFERENCES jobs(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(worker_id, job_id)
 );
 """
 
@@ -511,6 +635,23 @@ async def init_database():
                 print(f"WARN: Failed to create wallets table: {resp.status_code} {resp.text[:200]}")
     except Exception as e:
         print(f"WARN: Could not create wallets table: {e}")
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                f"https://api.supabase.com/v1/projects/{SUPABASE_PROJECT_REF}/database/query",
+                headers={
+                    "Authorization": f"Bearer {SUPABASE_MGMT_TOKEN}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                json={"query": CREATE_SAVED_JOBS_SQL}
+            )
+            if resp.status_code < 400:
+                print("Created saved_jobs table successfully")
+            else:
+                print(f"WARN: Failed to create saved_jobs table: {resp.status_code} {resp.text[:200]}")
+    except Exception as e:
+        print(f"WARN: Could not create saved_jobs table: {e}")
 
 @app.get("/api/reviews/all")
 async def get_all_reviews(limit: int = 60):

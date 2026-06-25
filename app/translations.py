@@ -143,6 +143,12 @@ AR = {
     "wj_view_details": "عرض التفاصيل",
     "wj_empty_title": "لا توجد فرص عمل متاحة",
     "wj_empty_desc": "لا توجد فرص عمل متاحة في مدينتك حالياً. سيتم إضافة فرص جديدة قريباً.",
+    "wj_save": "حفظ",
+    "wj_saved": "تم الحفظ",
+    "wsj_title": "الفرص المحفوظة",
+    "wsj_subtitle": "الفرص التي قمت بحفظها",
+    "wsj_empty_title": "لم تحفظ أي فرصة بعد",
+    "wsj_empty_btn": "تصفح فرص العمل",
 
     # Worker Job Detail
     "wjd_back": "العودة للفرص",
@@ -206,6 +212,9 @@ AR = {
     "ed_status_open": "مفتوحة",
     "ed_status_closed": "مغلقة",
     "ed_applicants_btn": "المتقدمون",
+    "ed_delete": "حذف",
+    "ed_edit": "تعديل",
+    "ed_confirm_delete": "هل أنت متأكد من حذف فرصة العمل هذه؟",
     "ed_empty_title": "لم تنشر أي فرصة عمل بعد",
     "ed_empty_btn": "نشر أول فرصة",
 
@@ -224,6 +233,7 @@ AR = {
     "ep_pay_placeholder": "مثال: 50000",
     "ep_address_placeholder": "الحي، الشارع",
     "ep_submit_btn": "نشر الفرصة",
+    "ep_update_btn": "تحديث الفرصة",
     "ep_publishing": "جاري النشر...",
     "ep_success": "تم نشر فرصة العمل بنجاح! سيتم تحويلك...",
 
@@ -234,12 +244,21 @@ AR = {
     "ea_phone_unavailable": "غير متوفر",
     "ea_city_unknown": "غير محدد",
     "ea_age_label": "العمر:",
+    "ea_accept": "قبول",
+    "ea_reject": "رفض",
+    "ea_accepted": "مقبول",
+    "ea_rejected": "مرفوض",
     "ea_empty_title": "لا يوجد متقدمين حتى الآن",
     "ea_empty_desc": "لم يتقدم أي عامل لهذه الفرصة بعد",
 
     # Admin Dashboard
     "ad_title": "لوحة المشرف",
     "ad_subtitle": "إدارة العمال وفرص العمل",
+    "ad_total_workers": "إجمالي العمال",
+    "ad_total_employers": "إجمالي أرباب العمل",
+    "ad_total_jobs": "إجمالي فرص العمل",
+    "ad_total_apps": "إجمالي الطلبات",
+    "ad_employers_header": "أرباب العمل",
     "ad_pending_header": "طلبات الموافقة على العمال",
     "ad_th_name": "الاسم",
     "ad_th_city": "المدينة",
@@ -261,6 +280,14 @@ AR = {
     "ad_confirm_approve": "تأكيد الموافقة على هذا العامل؟",
     "ad_confirm_reject": "تأكيد رفض هذا العامل؟",
     "ad_confirm_close": "إغلاق فرصة العمل هذه؟",
+
+    # Errors
+    "not_authorized_title": "غير مصرح",
+    "not_authorized_desc": "ليس لديك صلاحية الوصول إلى هذه الصفحة",
+    "not_authorized_btn": "العودة للرئيسية",
+    "server_error_title": "خطأ في الخادم",
+    "server_error_desc": "حدث خطأ غير متوقع، يرجى المحاولة لاحقاً",
+    "server_error_btn": "العودة للرئيسية",
 
     # General
     "loading": "جاري التحميل...",
@@ -291,6 +318,9 @@ AR = {
     "wallet_deposit_label": "المبلغ (ل.س)",
     "wallet_deposit_placeholder": "أدخل المبلغ",
     "wallet_deposit_success": "تم الإيداع بنجاح",
+
+    # Work Types
+    "work_types": ["بناء وصيانة", "نظافة وخدمات منزلية", "توصيل وشحن", "سائق", "كهرباء", "سباكة", "نجارة", "حدادة و لحام", "دهان و ديكور", "تبريد و تكييف", "حدائق و زراعة", "حرف يدوية", "حراسة و أمن", "أخرى"],
 
     # Verified badge
     "verified": "موثق",
@@ -453,6 +483,12 @@ EN = {
     "wj_view_details": "View Details",
     "wj_empty_title": "No jobs available",
     "wj_empty_desc": "No jobs available in your city yet. New jobs will be added soon.",
+    "wj_save": "Save",
+    "wj_saved": "Saved",
+    "wsj_title": "Saved Jobs",
+    "wsj_subtitle": "Jobs you have saved",
+    "wsj_empty_title": "No saved jobs yet",
+    "wsj_empty_btn": "Browse Jobs",
 
     # Worker Job Detail
     "wjd_back": "Back to Jobs",
@@ -516,6 +552,9 @@ EN = {
     "ed_status_open": "Open",
     "ed_status_closed": "Closed",
     "ed_applicants_btn": "Applicants",
+    "ed_delete": "Delete",
+    "ed_edit": "Edit",
+    "ed_confirm_delete": "Are you sure you want to delete this job?",
     "ed_empty_title": "No jobs posted yet",
     "ed_empty_btn": "Post Your First Job",
 
@@ -534,6 +573,7 @@ EN = {
     "ep_pay_placeholder": "e.g.: 50000",
     "ep_address_placeholder": "District, Street",
     "ep_submit_btn": "Post Job",
+    "ep_update_btn": "Update Job",
     "ep_publishing": "Publishing...",
     "ep_success": "Job posted successfully! Redirecting...",
 
@@ -544,12 +584,21 @@ EN = {
     "ea_phone_unavailable": "Not available",
     "ea_city_unknown": "Not specified",
     "ea_age_label": "Age:",
+    "ea_accept": "Accept",
+    "ea_reject": "Reject",
+    "ea_accepted": "Accepted",
+    "ea_rejected": "Rejected",
     "ea_empty_title": "No applicants yet",
     "ea_empty_desc": "No workers have applied for this job yet",
 
     # Admin Dashboard
     "ad_title": "Admin Panel",
     "ad_subtitle": "Manage workers & jobs",
+    "ad_total_workers": "Total Workers",
+    "ad_total_employers": "Total Employers",
+    "ad_total_jobs": "Total Jobs",
+    "ad_total_apps": "Total Applications",
+    "ad_employers_header": "Employers",
     "ad_pending_header": "Worker Approval Requests",
     "ad_th_name": "Name",
     "ad_th_city": "City",
@@ -571,6 +620,15 @@ EN = {
     "ad_confirm_approve": "Confirm approval of this worker?",
     "ad_confirm_reject": "Confirm rejection of this worker?",
     "ad_confirm_close": "Close this job posting?",
+
+    # Errors
+    "not_authorized_title": "Not Authorized",
+    "not_authorized_desc": "You don't have permission to access this page",
+    "not_authorized_btn": "Back to Home",
+    "server_error_title": "Server Error",
+    "server_error_desc": "An unexpected error occurred, please try again later",
+    "server_error_btn": "Back to Home",
+
     "404_title": "Page Not Found",
     "404_desc": "Sorry, the page you're looking for doesn't exist or has been moved.",
     "404_btn": "Back to Home",
@@ -589,6 +647,9 @@ EN = {
     "wallet_deposit_label": "Amount (SYP)",
     "wallet_deposit_placeholder": "Enter amount",
     "wallet_deposit_success": "Deposit successful",
+
+    # Work Types
+    "work_types": ["Construction & Maintenance", "Cleaning & House Services", "Delivery & Shipping", "Driver", "Electrical", "Plumbing", "Carpentry", "Blacksmithing & Welding", "Painting & Decoration", "Cooling & AC", "Gardening & Agriculture", "Handicrafts", "Security & Guarding", "Other"],
 
     # Verified badge
     "verified": "Verified",

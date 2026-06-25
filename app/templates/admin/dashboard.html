@@ -12,6 +12,36 @@
   <div class="container">
     <div class="row g-4">
 
+      <!-- Stats Row -->
+      <div class="col-12">
+        <div class="row g-3">
+          <div class="col-md-3 col-6">
+            <div class="card shadow-sm border-0 text-center p-3">
+              <h3 class="fw-bold text-primary mb-1">{{ total_workers }}</h3>
+              <small class="text-muted">{{ t.ad_total_workers }}</small>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card shadow-sm border-0 text-center p-3">
+              <h3 class="fw-bold text-success mb-1">{{ total_employers }}</h3>
+              <small class="text-muted">{{ t.ad_total_employers }}</small>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card shadow-sm border-0 text-center p-3">
+              <h3 class="fw-bold text-warning mb-1">{{ total_jobs }}</h3>
+              <small class="text-muted">{{ t.ad_total_jobs }}</small>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card shadow-sm border-0 text-center p-3">
+              <h3 class="fw-bold text-info mb-1">{{ total_applications }}</h3>
+              <small class="text-muted">{{ t.ad_total_apps }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Pending Workers -->
       <div class="col-12">
         <div class="card shadow-sm border-0">
@@ -100,6 +130,35 @@
                       {% endif %}
                     </td>
                     <td>{{ w.created_at[:10] if w.created_at else '' }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employers -->
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white fw-bold"><i class="bi bi-briefcase text-primary ms-2"></i>{{ t.ad_employers_header }}</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>{{ t.ad_th_name }}</th>
+                    <th>{{ t.ad_th_phone }}</th>
+                    <th>{{ t.ad_th_city }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for e in employers %}
+                  <tr>
+                    <td class="fw-medium">{{ e.first_name or '' }} {{ e.last_name or '' }}</td>
+                    <td dir="ltr" style="text-align:right">{{ e.phone or '' }}</td>
+                    <td>{{ e.city or t.not_specified }}</td>
                   </tr>
                   {% endfor %}
                 </tbody>
