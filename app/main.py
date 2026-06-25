@@ -47,14 +47,14 @@ async def not_found(request, exc):
 async def server_error(request, exc):
     return render_template(request, "errors/500.html")
 
-@app.get("/sitemap.xml", response_class=Response, media_type="application/xml")
+@app.get("/sitemap.xml", response_class=Response)
 async def sitemap():
-    return """<?xml version="1.0" encoding="UTF-8"?>
+    return Response(content="""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://sanad-job.onrender.com/</loc><priority>1.0</priority></url>
   <url><loc>https://sanad-job.onrender.com/login</loc><priority>0.6</priority></url>
   <url><loc>https://sanad-job.onrender.com/register</loc><priority>0.8</priority></url>
-</urlset>"""
+</urlset>""", media_type="application/xml")
 
 @app.get("/health")
 async def health():
