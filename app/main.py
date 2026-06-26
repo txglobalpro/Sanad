@@ -298,20 +298,6 @@ async def job_details(request: Request, job_id: str):
     employer = supabase.table("employers").select("*").eq("id", job.data["employer_id"]).single().execute()
     return render_template(request, "worker/job_detail.html", user=user, job=job.data, employer=employer.data if employer.data else None)
 
-@app.post("/api/worker/apply/{job_id}")
-async def apply_job(request: Request, job_id: str):
-    user = await get_current_user(request)
-    if not user: raise HTTPException(401)
-    profile = await get_user_profile(user["sub"])
-    if not profile or profile["type"] != "worker": raise HTTPException(403)
-    existing = supabase.table("applications").select("*").eq("job_id", job_id).eq("worker_id", profile["data"]["id"]).execute()
-    if existing.data:
-        return JSONResponse({"success": False, "message": "لقد تقدمت لهذه الفرصة مسبقاً"}, status_code=400)
-    supabase_admin.table("applications").insert({
-        "job_id": job_id, "worker_id": profile["data"]["id"], "status": "pending"
-    }).execute()
-    return {"success": True, "message": "تم التقديم على الفرصة بنجاح"}
-
 @app.post("/api/worker/save-job/{job_id}")
 async def save_job(request: Request, job_id: str):
     user = await get_current_user(request)
@@ -454,34 +440,6 @@ async def view_applicants(request: Request, job_id: str):
     if not job.data: return RedirectResponse("/employer/dashboard", status_code=302)
     apps = supabase.table("applications").select("*, workers(*)").eq("job_id", job_id).execute()
     return render_template(request, "employer/applicants.html", user=user, job=job.data, applications=apps.data)
-
-@app.post("/api/employer/accept-application/{application_id}")
-async def accept_application(request: Request, application_id: str):
-    user = await get_current_user(request)
-    if not user:
-        raise HTTPException(401)
-    profile = await get_user_profile(user["sub"])
-    if not profile or profile["type"] != "employer":
-        raise HTTPException(403)
-    try:
-        supabase_admin.table("applications").update({"status": "accepted"}).eq("id", application_id).execute()
-        return {"success": True, "message": "تم قبول المتقدم"}
-    except Exception as e:
-        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
-
-@app.post("/api/employer/reject-application/{application_id}")
-async def reject_application(request: Request, application_id: str):
-    user = await get_current_user(request)
-    if not user:
-        raise HTTPException(401)
-    profile = await get_user_profile(user["sub"])
-    if not profile or profile["type"] != "employer":
-        raise HTTPException(403)
-    try:
-        supabase_admin.table("applications").update({"status": "rejected"}).eq("id", application_id).execute()
-        return {"success": True, "message": "تم رفض المتقدم"}
-    except Exception as e:
-        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
 
 # ==================== Admin Routes ====================
 
