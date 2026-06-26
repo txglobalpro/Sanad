@@ -108,6 +108,8 @@ AR = {
     "register_login_link": "تسجيل دخول",
     "register_loading": "جاري إنشاء الحساب...",
     "register_error_connection": "حدث خطأ في الاتصال",
+    "register_error_timeout": "انتهت مهلة الاتصال، حاول مرة أخرى",
+    "register_error_generic": "حدث خطأ غير متوقع، حاول مرة أخرى",
     "register_gender_select": "اختر",
 
     # Dark mode
@@ -436,6 +438,8 @@ EN = {
     "register_login_link": "Login",
     "register_loading": "Creating account...",
     "register_error_connection": "Connection error occurred",
+    "register_error_timeout": "Connection timed out, please try again",
+    "register_error_generic": "An unexpected error occurred, please try again",
     "register_gender_select": "Select",
 
     # Dark mode

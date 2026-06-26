@@ -113,7 +113,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
   btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.register_loading }}';
   try {
     const controller = new AbortController();
-    const tmr = setTimeout(() => controller.abort(), 20000);
+    const tmr = setTimeout(() => controller.abort(), 60000);
     const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data), signal: controller.signal });
     clearTimeout(tmr);
     const json = await res.json();
@@ -122,11 +122,18 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
       document.getElementById('registerSuccess').classList.remove('d-none');
       setTimeout(() => window.location.href = '/login', 2000);
     } else {
-      const err = document.getElementById('registerError'); err.textContent = json.message; err.classList.remove('d-none');
+      const err = document.getElementById('registerError'); err.textContent = json.message || '{{ t.register_error_generic }}'; err.classList.remove('d-none');
     }
   } catch(e) {
     console.error('Register fetch error:', e);
-    alert('{{ t.register_error_connection }}'); }
+    const errDiv = document.getElementById('registerError');
+    if (e.name === 'AbortError') {
+      errDiv.textContent = '{{ t.register_error_timeout }}';
+    } else {
+      errDiv.textContent = '{{ t.register_error_connection }}';
+    }
+    errDiv.classList.remove('d-none');
+  }
   finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-plus ms-1"></i>{{ t.register_btn }}'; }
 });
 </script>

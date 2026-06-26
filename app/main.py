@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from jinja2 import Environment, FileSystemLoader
 import os
+import asyncio
 from datetime import datetime, timedelta
 import jwt
 from typing import Optional, Dict
@@ -123,16 +124,12 @@ async def register_page(request: Request):
 @app.post("/api/auth/register")
 async def register(data: UserRegister):
     try:
-        # Check if Supabase is reachable before attempting user creation
-        try:
-            supabase_admin.auth.admin.get_user_by_id("nonexistent")
-        except Exception:
-            pass  # Ignore - this is just to test connectivity
-        auth_result = supabase_admin.auth.admin.create_user({
+        loop = asyncio.get_event_loop()
+        auth_result = await loop.run_in_executor(None, lambda: supabase_admin.auth.admin.create_user({
             "email": data.email,
             "password": data.password,
             "email_confirm": True
-        })
+        }))
         user_id = auth_result.user.id
 
         profile_data = {
@@ -144,11 +141,11 @@ async def register(data: UserRegister):
 
         if data.role == "worker":
             profile_data["is_approved"] = False
-            supabase_admin.table("workers").insert(profile_data).execute()
+            await loop.run_in_executor(None, lambda: supabase_admin.table("workers").insert(profile_data).execute())
         else:
-            supabase_admin.table("employers").insert(profile_data).execute()
+            await loop.run_in_executor(None, lambda: supabase_admin.table("employers").insert(profile_data).execute())
 
-        supabase_admin.table("wallets").insert({"user_id": user_id, "balance": 0}).execute()
+        await loop.run_in_executor(None, lambda: supabase_admin.table("wallets").insert({"user_id": user_id, "balance": 0}).execute())
 
         return {"success": True, "message": "تم إنشاء الحساب بنجاح"}
     except Exception as e:
