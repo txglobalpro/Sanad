@@ -177,7 +177,10 @@ async def login(data: UserLogin):
         profile = await get_user_profile(user.id)
         role = "admin" if user.email == "admin@sanad.com" else (profile["type"] if profile else "unknown")
 
-        token = create_token({"sub": user.id, "email": user.email, "role": role})
+        first_name = profile["data"].get("first_name", "") if (profile and profile.get("data")) else ""
+        last_name = profile["data"].get("last_name", "") if (profile and profile.get("data")) else ""
+
+        token = create_token({"sub": user.id, "email": user.email, "role": role, "first_name": first_name, "last_name": last_name})
 
         response = JSONResponse({"success": True, "role": role, "redirect": "/admin/dashboard" if role == "admin" else f"/{role}/dashboard"})
         response.set_cookie(key="token", value=token, httponly=True, max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60, samesite="lax")

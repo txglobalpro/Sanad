@@ -37,9 +37,9 @@
         </li>
         {% if user %}
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" data-bs-toggle="dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-person-circle fs-5"></i>
-              <span class="d-none d-lg-inline">{{ user.email[:20] }}{% if user.email|length > 20 %}...{% endif %}</span>
+              <span class="d-none d-lg-inline">{{ (user.first_name + ' ' + user.last_name) if (user.first_name and user.last_name) else user.email }}</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><span class="dropdown-item-text small text-secondary d-flex align-items-center gap-2">
