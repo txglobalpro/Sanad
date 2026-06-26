@@ -71,25 +71,37 @@
       <span id="userNameDisplay" class="small fw-medium text-secondary" style="white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="{{ full_name }}">
         {{ full_name }}
       </span>
-      <div class="dropdown">
-        <button class="btn btn-sm nav-link py-0 border-0 dropdown-toggle d-flex align-items-center gap-1" id="userDropdownDesktop" data-bs-toggle="dropdown" aria-expanded="false" style="background:none;">
-          <i class="bi bi-person-circle fs-5"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdownDesktop" style="min-width:180px;">
-          <li><span class="dropdown-item-text small text-secondary d-flex align-items-center gap-2 py-1">
-            <i class="bi bi-wallet2"></i> {{ t.wallet_balance }}: <strong id="walletBalance">{% if wallet %}{{ wallet.balance }}{% else %}0{% endif %}</strong> ل.س
-          </span></li>
-          <li><hr class="dropdown-divider my-1"></li>
-          {% if user.role == 'worker' %}
-            <li><a class="dropdown-item py-1" href="/worker/profile"><i class="bi bi-person ms-2"></i>{{ t.nav_profile }}</a></li>
-          {% endif %}
-          <li><a class="dropdown-item py-1" href="/about">{{ t.nav_about }}</a></li>
-          <li><a class="dropdown-item py-1" href="/contact">{{ t.nav_contact }}</a></li>
-          <li><hr class="dropdown-divider my-1"></li>
-          <li><a class="dropdown-item text-danger py-1" href="/api/auth/logout"><i class="bi bi-box-arrow-left ms-2"></i>{{ t.nav_logout }}</a></li>
-        </ul>
+      <button class="user-menu-btn" onclick="toggleUserMenu(event)" aria-label="{{ t.nav_profile }}" id="userMenuToggle">
+        <i class="bi bi-person-circle fs-5"></i>
+      </button>
+      <div id="userMenuPanel" class="user-dropdown-panel">
+        <div class="dropdown-item-text small text-secondary d-flex align-items-center gap-2 px-2 py-1">
+          <i class="bi bi-wallet2"></i> {{ t.wallet_balance }}: <strong id="walletBalance">{% if wallet %}{{ wallet.balance }}{% else %}0{% endif %}</strong> ل.س
+        </div>
+        <hr>
+        {% if user.role == 'worker' %}
+          <a class="dropdown-item" href="/worker/profile"><i class="bi bi-person ms-2"></i>{{ t.nav_profile }}</a>
+        {% endif %}
+        <a class="dropdown-item" href="/about">{{ t.nav_about }}</a>
+        <a class="dropdown-item" href="/contact">{{ t.nav_contact }}</a>
+        <hr>
+        <a class="dropdown-item text-danger" href="/api/auth/logout"><i class="bi bi-box-arrow-left ms-2"></i>{{ t.nav_logout }}</a>
       </div>
     </div>
+    <script>
+    function toggleUserMenu(e) {
+      e.stopPropagation();
+      const panel = document.getElementById('userMenuPanel');
+      panel.classList.toggle('show');
+    }
+    document.addEventListener('click', function(e) {
+      const panel = document.getElementById('userMenuPanel');
+      const btn = document.getElementById('userMenuToggle');
+      if (panel && !panel.contains(e.target) && !btn.contains(e.target)) {
+        panel.classList.remove('show');
+      }
+    });
+    </script>
     {% endif %}
   </div>
 </nav>

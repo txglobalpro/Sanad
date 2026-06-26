@@ -142,8 +142,39 @@ a:hover { color: var(--primary-dark); }
   color: var(--primary);
 }
 
-/* Fix: user dropdown outside collapse, no clipping */
-.navbar .dropdown-menu { border: none; box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+/* User dropdown - fixed position, never clipped */
+.navbar .user-menu-btn {
+  background: none; border: none; cursor: pointer; padding: 0.25rem 0.5rem;
+}
+.user-dropdown-panel {
+  position: fixed !important;
+  top: 60px;
+  z-index: 9999;
+  background: #fff;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  padding: 0.5rem;
+  min-width: 200px;
+  display: none;
+}
+.user-dropdown-panel.show { display: block; }
+.user-dropdown-panel .dropdown-item {
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+}
+.user-dropdown-panel .dropdown-item:hover {
+  background: var(--primary-50);
+  color: var(--primary);
+}
+.user-dropdown-panel hr { margin: 0.35rem 0; }
+[data-theme="dark"] .user-dropdown-panel { background: var(--card-bg); }
+[data-theme="dark"] .user-dropdown-panel .dropdown-item { color: var(--text-primary); }
+[data-theme="dark"] .user-dropdown-panel .dropdown-item:hover { background: var(--dark-200); }
+[dir="rtl"] .user-dropdown-panel { left: 10px; right: auto; }
+[dir="ltr"] .user-dropdown-panel { right: 10px; left: auto; }
+
 }
 
 /* ===== Buttons ===== */
