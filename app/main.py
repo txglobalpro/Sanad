@@ -268,7 +268,7 @@ async def upload_id(request: Request, file: UploadFile = File(...), side: str = 
         return JSONResponse({"success": False, "message": str(e)}, status_code=400)
 
 @app.get("/worker/jobs", response_class=HTMLResponse)
-async def worker_jobs(request: Request):
+async def worker_jobs(request: Request, q: str = "", work_type: str = "", city: str = ""):
     user = await get_current_user(request)
     if not user: return RedirectResponse("/login", status_code=302)
     profile = await get_user_profile(user["sub"])
@@ -276,8 +276,17 @@ async def worker_jobs(request: Request):
     worker = profile["data"]
     if not worker.get("is_approved"):
         return render_template(request, "worker/pending.html", user=user)
-    jobs = supabase.table("jobs").select("*").eq("city", worker["city"]).eq("status", "open").order("created_at", desc=True).execute()
-    return render_template(request, "worker/jobs.html", user=user, jobs=jobs.data, worker=worker, work_types=WORK_TYPES)
+    query = supabase.table("jobs").select("*").eq("status", "open")
+    if city:
+        query = query.eq("city", city)
+    if work_type:
+        query = query.eq("work_type", work_type)
+    result = query.order("created_at", desc=True).execute()
+    jobs = result.data
+    if q:
+        ql = q.lower()
+        jobs = [j for j in jobs if ql in j.get("title", "").lower() or ql in j.get("description", "").lower()]
+    return render_template(request, "worker/jobs.html", user=user, jobs=jobs, worker=worker, work_types=WORK_TYPES, cities=CITIES, q=q, sel_work_type=work_type, sel_city=city)
 
 @app.get("/worker/jobs/{job_id}", response_class=HTMLResponse)
 async def job_details(request: Request, job_id: str):

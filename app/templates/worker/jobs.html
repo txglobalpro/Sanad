@@ -4,22 +4,37 @@
 <section class="hero-section bg-primary text-white">
   <div class="container">
     <h4 class="fw-bold mb-1">{{ t.wj_title }}</h4>
-    <p class="mb-0 opacity-75">{{ t.wj_subtitle }} <span class="fw-bold">{{ worker.city }}</span></p>
+    <p class="mb-0 opacity-75">{{ t.wj_subtitle }}</p>
   </div>
 </section>
 
 <section class="section-padding">
   <div class="container">
-    <div class="row mb-4">
-      <div class="col-md-6">
-        <select id="workTypeFilter" class="form-select" onchange="filterJobs()">
-          <option value="">{{ t.search }}</option>
+    <form method="GET" action="/worker/jobs" class="row g-2 mb-4">
+      <div class="col-12 col-md-4">
+        <input type="text" name="q" class="form-control" placeholder="{{ t.search }}" value="{{ q }}">
+      </div>
+      <div class="col-6 col-md-3">
+        <select name="work_type" class="form-select">
+          <option value="">{{ t.wj_all_types }}</option>
           {% for wt in work_types %}
-          <option value="{{ wt }}">{{ wt }}</option>
+          <option value="{{ wt }}" {% if sel_work_type == wt %}selected{% endif %}>{{ wt }}</option>
           {% endfor %}
         </select>
       </div>
-    </div>
+      <div class="col-6 col-md-3">
+        <select name="city" class="form-select">
+          <option value="">{{ t.wj_all_cities }}</option>
+          {% for c in cities %}
+          <option value="{{ c }}" {% if sel_city == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search ms-1"></i>{{ t.wj_search }}</button>
+      </div>
+    </form>
+
     {% if jobs %}
     <div class="row g-3" id="jobsContainer">
       {% for job in jobs %}
@@ -59,14 +74,6 @@
 {% endblock %}
 {% block extra_js %}
 <script>
-function filterJobs() {
-  const filter = document.getElementById('workTypeFilter').value;
-  const cards = document.querySelectorAll('#jobsContainer .col-md-6');
-  cards.forEach(card => {
-    const tag = card.querySelector('.tag');
-    card.style.display = (!filter || (tag && tag.textContent.trim() === filter)) ? '' : 'none';
-  });
-}
 async function toggleSaveJob(btn) {
   const jobId = btn.getAttribute('data-job-id');
   btn.disabled = true;
