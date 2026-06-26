@@ -67,8 +67,9 @@
 
     {% if user %}
     <div class="d-none d-lg-flex align-items-center gap-2 me-2">
-      <span class="small text-secondary" style="white-space:nowrap;">
-        {{ (user.first_name + ' ' + user.last_name) if (user.first_name and user.last_name) else '' }}
+      {% set full_name = (user.first_name + ' ' + user.last_name) if (user.first_name and user.last_name) else user.email.split('@')[0] %}
+      <span id="userNameDisplay" class="small fw-medium text-secondary" style="white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="{{ full_name }}">
+        {{ full_name }}
       </span>
       <div class="dropdown">
         <button class="btn btn-sm nav-link py-0 border-0 dropdown-toggle d-flex align-items-center gap-1" id="userDropdownDesktop" data-bs-toggle="dropdown" aria-expanded="false" style="background:none;">
@@ -92,3 +93,19 @@
     {% endif %}
   </div>
 </nav>
+{% if user %}
+<script>
+(function(){
+  const nameEl = document.getElementById('userNameDisplay');
+  if (nameEl && (!nameEl.textContent.trim() || nameEl.textContent.includes('@'))) {
+    fetch('/api/auth/me').then(r=>r.json()).then(d=>{
+      if (d.authenticated && d.profile && d.profile.data) {
+        const p = d.profile.data;
+        const full = (p.first_name||'') + ' ' + (p.last_name||'');
+        if (full.trim()) nameEl.textContent = full.trim();
+      }
+    }).catch(()=>{});
+  }
+})();
+</script>
+{% endif %}
