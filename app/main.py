@@ -547,8 +547,9 @@ REVIEWS_EMPLOYER_TEMPLATES = [
 ]
 
 async def ensure_reviews_table():
+    loop = asyncio.get_event_loop()
     try:
-        result = supabase_admin.table("reviews").select("id", count="exact").limit(1).execute()
+        result = await asyncio.wait_for(loop.run_in_executor(None, lambda: supabase_admin.table("reviews").select("id", count="exact").limit(1).execute()), timeout=15)
         return True
     except Exception:
         pass
@@ -602,21 +603,22 @@ async def seed_reviews(target_role, names, templates, count=500):
 
 @app.on_event("startup")
 async def init_database():
+    loop = asyncio.get_event_loop()
     try:
-        ok = await ensure_reviews_table()
+        ok = await asyncio.wait_for(ensure_reviews_table(), timeout=20)
         if ok:
-            result = supabase_admin.table("reviews").select("id").limit(1).execute()
+            result = await asyncio.wait_for(loop.run_in_executor(None, lambda: supabase_admin.table("reviews").select("id").limit(1).execute()), timeout=15)
             if not result.data:
                 print("Seeding reviews...")
-                await seed_reviews("worker", EMPLOYER_NAMES, REVIEWS_WORKER_TEMPLATES, 500)
-                await seed_reviews("employer", WORKER_NAMES, REVIEWS_EMPLOYER_TEMPLATES, 500)
+                await asyncio.wait_for(seed_reviews("worker", EMPLOYER_NAMES, REVIEWS_WORKER_TEMPLATES, 500), timeout=30)
+                await asyncio.wait_for(seed_reviews("employer", WORKER_NAMES, REVIEWS_EMPLOYER_TEMPLATES, 500), timeout=30)
                 print("Seeding complete")
             else:
                 print("Reviews table already has data, skipping seed")
     except Exception as e:
         print(f"WARN: init_database failed (non-fatal): {e}")
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
                 f"https://api.supabase.com/v1/projects/{SUPABASE_PROJECT_REF}/database/query",
                 headers={
@@ -633,7 +635,7 @@ async def init_database():
     except Exception as e:
         print(f"WARN: Could not create wallets table: {e}")
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
                 f"https://api.supabase.com/v1/projects/{SUPABASE_PROJECT_REF}/database/query",
                 headers={
