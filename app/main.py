@@ -22,6 +22,7 @@ import random
 import httpx
 
 SUPABASE_PROJECT_REF = "ubcpwhyjfzcphobjqtpl"
+SUPABASE_STORAGE_URL = f"https://{SUPABASE_PROJECT_REF}.supabase.co/storage/v1"
 
 _TEMPLATES_DIR = pathlib.Path("app/templates")
 _JINJA_ENV = Environment(loader=FileSystemLoader("app/templates"))
@@ -368,18 +369,38 @@ async def post_job_page(request: Request):
     if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
     return render_template(request, "employer/post_job.html", user=user, cities=CITIES, work_types=WORK_TYPES)
 
-@app.post("/api/employer/job")
-async def create_job(request: Request, title: str = Form(...), description: str = Form(""), work_type: str = Form(...), duration: str = Form(...), pay: float = Form(...), phone: str = Form(...), address: str = Form(...), city: str = Form(...), notes: str = Form("")):
+@app.post("/api/employer/upload-image")
+async def upload_job_image(request: Request, file: UploadFile = File(...)):
     user = await get_current_user(request)
     if not user: raise HTTPException(401)
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "employer": raise HTTPException(403)
     try:
-        supabase_admin.table("jobs").insert({
+        os.makedirs("app/static/uploads", exist_ok=True)
+        ext = pathlib.Path(file.filename).suffix if file.filename else ".jpg"
+        filename = f"job_{uuid.uuid4().hex[:12]}{ext}"
+        content = await file.read()
+        with open(f"app/static/uploads/{filename}", "wb") as f:
+            f.write(content)
+        return {"success": True, "url": f"/static/uploads/{filename}"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.post("/api/employer/job")
+async def create_job(request: Request, title: str = Form(...), description: str = Form(""), work_type: str = Form(...), duration: str = Form(...), pay: float = Form(...), phone: str = Form(...), address: str = Form(...), city: str = Form(...), notes: str = Form(""), image_url: str = Form("")):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": raise HTTPException(403)
+    try:
+        job_data = {
             "employer_id": profile["data"]["id"], "title": title, "description": description,
             "work_type": work_type, "duration": duration, "pay": pay,
             "phone": phone, "address": address, "city": city, "notes": notes, "status": "open"
-        }).execute()
+        }
+        if image_url:
+            job_data["image_url"] = image_url
+        supabase_admin.table("jobs").insert(job_data).execute()
         return {"success": True, "message": "تم نشر فرصة العمل بنجاح"}
     except Exception as e:
         return JSONResponse({"success": False, "message": str(e)}, status_code=400)
@@ -407,17 +428,20 @@ async def edit_job_page(request: Request, job_id: str):
     return render_template(request, "employer/post_job.html", user=user, job=job.data, work_types=WORK_TYPES, cities=CITIES)
 
 @app.post("/api/employer/job/{job_id}/update")
-async def update_job(request: Request, job_id: str, title: str = Form(...), description: str = Form(""), work_type: str = Form(...), duration: str = Form(...), pay: float = Form(...), phone: str = Form(...), address: str = Form(...), city: str = Form(...), notes: str = Form("")):
+async def update_job(request: Request, job_id: str, title: str = Form(...), description: str = Form(""), work_type: str = Form(...), duration: str = Form(...), pay: float = Form(...), phone: str = Form(...), address: str = Form(...), city: str = Form(...), notes: str = Form(""), image_url: str = Form("")):
     user = await get_current_user(request)
     if not user: raise HTTPException(401)
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "employer": raise HTTPException(403)
     try:
-        supabase_admin.table("jobs").update({
+        update_data = {
             "title": title, "description": description, "work_type": work_type,
             "duration": duration, "pay": pay, "phone": phone,
             "address": address, "city": city, "notes": notes
-        }).eq("id", job_id).eq("employer_id", profile["data"]["id"]).execute()
+        }
+        if image_url:
+            update_data["image_url"] = image_url
+        supabase_admin.table("jobs").update(update_data).eq("id", job_id).eq("employer_id", profile["data"]["id"]).execute()
         return {"success": True, "message": "تم تحديث فرصة العمل"}
     except Exception as e:
         return JSONResponse({"success": False, "message": str(e)}, status_code=400)

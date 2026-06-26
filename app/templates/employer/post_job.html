@@ -69,6 +69,17 @@
               <input type="text" name="address" class="form-control" required placeholder="{{ t.ep_address_placeholder }}" {% if job %}value="{{ job.address }}"{% endif %}>
             </div>
             <div class="col-12">
+              <label class="form-label">{{ t.ep_image }}</label>
+              <input type="file" id="imageInput" class="form-control" accept="image/*">
+              <input type="hidden" name="image_url" id="imageUrl" value="{% if job %}{{ job.image_url }}{% endif %}">
+              <div id="imagePreview" class="mt-2 {% if not job or not job.image_url %}d-none{% endif %}">
+                <img src="{% if job %}{{ job.image_url }}{% endif %}" class="rounded" style="max-height:150px;max-width:100%;" id="previewImg">
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="removeImage()"><i class="bi bi-trash"></i></button>
+              </div>
+              <div id="imageUploading" class="d-none mt-2"><span class="spinner-border spinner-border-sm ms-1"></span>{{ t.ep_uploading }}</div>
+              <small class="text-muted">{{ t.ep_image_hint }}</small>
+            </div>
+            <div class="col-12">
               <label class="form-label">{{ t.wjd_notes }} <span class="text-muted">{{ t.ep_optional }}</span></label>
               <textarea name="notes" class="form-control" rows="2">{% if job %}{{ job.notes }}{% endif %}</textarea>
             </div>
@@ -85,6 +96,32 @@
 {% endblock %}
 {% block extra_js %}
 <script>
+let uploadedImageUrl = '{% if job %}{{ job.image_url }}{% endif %}';
+document.getElementById('imageInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  document.getElementById('imageUploading').classList.remove('d-none');
+  document.getElementById('imagePreview').classList.add('d-none');
+  try {
+    const res = await fetch('/api/employer/upload-image', { method:'POST', body: fd });
+    const json = await res.json();
+    if (json.success) {
+      uploadedImageUrl = json.url;
+      document.getElementById('imageUrl').value = json.url;
+      document.getElementById('previewImg').src = json.url;
+      document.getElementById('imagePreview').classList.remove('d-none');
+    } else { alert(json.message); }
+  } catch(e) { alert('{{ t.error_connection }}'); }
+  finally { document.getElementById('imageUploading').classList.add('d-none'); }
+});
+function removeImage() {
+  uploadedImageUrl = '';
+  document.getElementById('imageUrl').value = '';
+  document.getElementById('imagePreview').classList.add('d-none');
+  document.getElementById('imageInput').value = '';
+}
 document.getElementById('jobForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = e.target;

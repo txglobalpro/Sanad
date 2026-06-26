@@ -60,6 +60,12 @@
           </div>
         </div>
 
+        {% if job.image_url %}
+        <div class="mb-3 text-center">
+          <img src="{{ job.image_url }}" alt="{{ job.title }}" class="rounded" style="max-height:300px;max-width:100%;">
+        </div>
+        {% endif %}
+
         {% if job.description %}
         <div class="mb-3">
           <h6 class="fw-bold">{{ t.wjd_description }}</h6>

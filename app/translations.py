@@ -241,6 +241,9 @@ AR = {
     "ep_update_btn": "تحديث الفرصة",
     "ep_publishing": "جاري النشر...",
     "ep_success": "تم نشر فرصة العمل بنجاح! سيتم تحويلك...",
+    "ep_image": "صورة للفرصة (اختياري)",
+    "ep_image_hint": "اختر صورة من جهازك لتظهر مع فرصة العمل",
+    "ep_uploading": "جاري رفع الصورة...",
 
     # Employer Applicants
     "ea_title": "المتقدمون",
@@ -623,6 +626,9 @@ EN = {
     "ep_update_btn": "Update Job",
     "ep_publishing": "Publishing...",
     "ep_success": "Job posted successfully! Redirecting...",
+    "ep_image": "Job Image (optional)",
+    "ep_image_hint": "Choose an image from your device to show with the job post",
+    "ep_uploading": "Uploading...",
 
     # Employer Applicants
     "ea_title": "Applicants",

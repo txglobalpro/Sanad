@@ -40,6 +40,11 @@
       {% for job in jobs %}
       <div class="col-md-6 col-lg-4 animate-fade-in-up stagger-{{ loop.index0 % 4 + 1 }}">
         <div class="job-card">
+          {% if job.image_url %}
+          <div class="mb-2" style="height:140px;overflow:hidden;border-radius:8px;">
+            <img src="{{ job.image_url }}" alt="{{ job.title }}" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          {% endif %}
           <h5 class="job-title">{{ job.title }}</h5>
           <div class="job-meta">
             <span><i class="bi bi-geo-alt ms-1"></i>{{ job.city }}</span>
