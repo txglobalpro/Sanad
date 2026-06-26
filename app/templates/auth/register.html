@@ -121,19 +121,27 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     if (json.success) {
       document.getElementById('registerSuccess').textContent = '{{ t.register_success }}';
       document.getElementById('registerSuccess').classList.remove('d-none');
+      document.getElementById('registerSuccess').scrollIntoView({ behavior: 'smooth', block: 'center' });
       setTimeout(() => window.location.href = '/login', 2000);
     } else {
-      const err = document.getElementById('registerError'); err.textContent = json.message || '{{ t.register_error_generic }}'; err.classList.remove('d-none');
+      const err = document.getElementById('registerError');
+      const msg = json.message || '{{ t.register_error_generic }}';
+      err.textContent = msg;
+      err.classList.remove('d-none');
+      err.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   } catch(e) {
     console.error('Register fetch error:', e);
     const errDiv = document.getElementById('registerError');
+    let msg;
     if (e.name === 'AbortError') {
-      errDiv.textContent = '{{ t.register_error_timeout }}';
+      msg = '{{ t.register_error_timeout }}';
     } else {
-      errDiv.textContent = '{{ t.register_error_connection }}';
+      msg = '{{ t.register_error_connection }}';
     }
+    errDiv.textContent = msg;
     errDiv.classList.remove('d-none');
+    errDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-plus ms-1"></i>{{ t.register_btn }}'; }
 });
