@@ -66,7 +66,7 @@
     </div>
 
     {% if user %}
-    <div class="d-none d-lg-flex align-items-center gap-2 me-2">
+    <div class="d-none d-lg-flex align-items-center gap-2 me-2 user-menu-wrapper">
       {% set full_name = (user.first_name + ' ' + user.last_name) if (user.first_name and user.last_name) else user.email.split('@')[0] %}
       <span id="userNameDisplay" class="small fw-medium text-secondary" style="white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="{{ full_name }}">
         {{ full_name }}
@@ -91,15 +91,13 @@
     <script>
     function toggleUserMenu(e) {
       e.stopPropagation();
-      const panel = document.getElementById('userMenuPanel');
-      panel.classList.toggle('show');
+      const p = document.getElementById('userMenuPanel');
+      p.classList.toggle('show');
     }
     document.addEventListener('click', function(e) {
-      const panel = document.getElementById('userMenuPanel');
-      const btn = document.getElementById('userMenuToggle');
-      if (panel && !panel.contains(e.target) && !btn.contains(e.target)) {
-        panel.classList.remove('show');
-      }
+      const p = document.getElementById('userMenuPanel');
+      const b = document.getElementById('userMenuToggle');
+      if (p && !p.contains(e.target) && !b.contains(e.target)) p.classList.remove('show');
     });
     </script>
     {% endif %}
