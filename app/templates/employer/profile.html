@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ t.eprof_title }} - Sanad{% endblock %}
+{% block content %}
+<section class="section-padding">
+  <div class="container">
+    <div class="card shadow-lg border-0">
+      <div class="card-body p-4">
+        <div class="text-center mb-4">
+          <div class="position-relative d-inline-block">
+            <div id="logoPreview" class="rounded-circle overflow-hidden border border-4 border-success" style="width:120px;height:120px;cursor:pointer;background:#ecfdf5;display:flex;align-items:center;justify-content:center;">
+              {% if employer.company_logo %}
+               <img src="{{ employer.company_logo }}" alt="{{ t.eprof_company_logo }}" style="width:100%;height:100%;object-fit:cover;">
+              {% else %}
+              <i class="bi bi-building" style="font-size:3rem;color:var(--secondary);"></i>
+              {% endif %}
+            </div>
+            <div class="position-absolute bottom-0 end-0" style="transform:translate(5%,5%);">
+              <label for="logoInput" class="btn btn-success btn-sm rounded-circle p-1 shadow" style="width:34px;height:34px;cursor:pointer;">
+                <i class="bi bi-camera-fill"></i>
+              </label>
+              <input type="file" id="logoInput" accept="image/*" class="d-none">
+            </div>
+          </div>
+          <h4 class="fw-bold mt-3 mb-1">{{ t.eprof_title }}</h4>
+          <div class="mt-2">
+            {% if employer.is_verified %}
+            <span class="badge bg-success fs-6 px-3 py-1">
+              <i class="bi bi-patch-check-fill ms-1"></i>{{ t.eprof_verified }}
+            </span>
+            {% else %}
+            <span class="badge bg-secondary fs-6 px-3 py-1">
+              <i class="bi bi-shield-exclamation ms-1"></i>{{ t.eprof_not_verified }}
+            </span>
+            <p class="text-secondary small mt-2 mb-0">{{ t.eprof_verify_info }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <form id="profileForm">
+          <div class="mb-3">
+            <label class="form-label">{{ t.eprof_company_name }}</label>
+            <input type="text" name="company_name" class="form-control" value="{{ employer.company_name or '' }}" placeholder="{{ t.eprof_company_name }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ t.eprof_company_desc }}</label>
+            <textarea name="company_description" class="form-control" rows="4" placeholder="{{ t.eprof_company_desc_placeholder }}">{{ employer.company_description or '' }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-success px-4 w-100 w-md-auto">
+            <i class="bi bi-check2 ms-1"></i>{{ t.wp_save_btn }}
+          </button>
+        </form>
+        <div id="profileMsg" class="mt-3"></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('logoInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    const res = await fetch('/api/employer/profile/upload-logo', { method:'POST', body: fd });
+    const json = await res.json();
+    if (json.success) {
+      document.getElementById('logoPreview').innerHTML = '<img src="'+json.url+'" alt="{{ t.eprof_company_logo }}" style="width:100%;height:100%;object-fit:cover;">';
+    } else { alert(json.message); }
+  } catch(e) { alert('{{ t.error_connection }}'); }
+});
+
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.wp_saving }}';
+  try {
+    const res = await fetch('/api/employer/profile/save', { method:'POST', body: fd });
+    const json = await res.json();
+    const msg = document.getElementById('profileMsg');
+    if (json.success) {
+      msg.innerHTML = '<div class="alert alert-success d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i>{{ t.eprof_saved }}</div>';
+    } else {
+      msg.innerHTML = '<div class="alert alert-danger d-flex align-items-center gap-2"><i class="bi bi-x-circle-fill"></i>'+json.message+'</div>';
+    }
+  } catch(e) { alert('{{ t.error_connection }}'); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2 ms-1"></i>{{ t.wp_save_btn }}'; }
+});
+</script>
+{% endblock %}

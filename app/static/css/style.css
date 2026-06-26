@@ -1100,3 +1100,43 @@ a:hover { color: var(--primary-dark); }
   margin-right: 4px;
 }
 .install-close:hover { opacity: 1; }
+
+/* notification bell */
+.notif-badge { position:absolute; top:-4px; right:-4px; font-size:0.6rem; padding:0.15rem 0.4rem; border-radius:50%; background:#dc3545; color:#fff; min-width:18px; text-align:center; }
+[dir="rtl"] .notif-badge { right:auto; left:-4px; }
+.notif-btn-icon { position:relative; background:none; border:none; font-size:1.2rem; color:inherit; padding:0.25rem; cursor:pointer; }
+
+/* skill tags */
+.skill-tag { display:inline-block; background:var(--primary-50); color:var(--primary); padding:0.25rem 0.75rem; border-radius:20px; font-size:0.85rem; font-weight:500; margin:0.15rem; }
+.skill-tag .bi-x { cursor:pointer; margin-left:4px; }
+.skill-tag .bi-x:hover { opacity:0.7; }
+
+/* notification cards */
+.notif-card { border:0; border-radius:12px; transition:all 0.2s; }
+.notif-card.unread { border-right:3px solid var(--primary); background:var(--primary-50); }
+.notif-card:hover { box-shadow:var(--shadow-sm); }
+[dir="rtl"] .notif-card.unread { border-right:0; border-left:3px solid var(--primary); }
+.notif-time { font-size:0.75rem; opacity:0.6; }
+
+/* message layout */
+.msg-sidebar { border-left:1px solid var(--dark-200); max-height:70vh; overflow-y:auto; }
+[dir="rtl"] .msg-sidebar { border-left:0; border-right:1px solid var(--dark-200); }
+.msg-conversation { cursor:pointer; padding:0.75rem 1rem; border-radius:8px; transition:background 0.2s; }
+.msg-conversation:hover { background:var(--dark-100); }
+.msg-conversation.active { background:var(--primary-50); }
+.msg-area { max-height:55vh; overflow-y:auto; padding:1rem; }
+.msg-bubble { max-width:75%; padding:0.5rem 1rem; border-radius:16px; margin-bottom:0.5rem; }
+.msg-bubble.sent { background:var(--primary); color:#fff; margin-left:auto; border-bottom-left-radius:4px; }
+.msg-bubble.received { background:var(--dark-100); margin-right:auto; border-bottom-right-radius:4px; }
+[data-theme="dark"] .msg-conversation:hover { background:var(--dark-200); }
+[data-theme="dark"] .msg-bubble.received { background:var(--dark-200); }
+[data-theme="dark"] .msg-sidebar { border-color:var(--dark-200); }
+
+/* profile photo overlay */
+.photo-overlay { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.5); color:#fff; text-align:center; padding:0.25rem; font-size:0.7rem; cursor:pointer; opacity:0; transition:opacity 0.2s; }
+.photo-wrapper:hover .photo-overlay { opacity:1; }
+
+/* experience/education cards */
+.exp-card, .edu-card { background:var(--dark-100); border-radius:12px; padding:1rem; margin-bottom:0.75rem; position:relative; }
+.exp-card .remove-btn, .edu-card .remove-btn { position:absolute; top:0.5rem; left:0.5rem; background:none; border:none; color:#dc3545; cursor:pointer; }
+[dir="rtl"] .exp-card .remove-btn, [dir="rtl"] .edu-card .remove-btn { left:auto; right:0.5rem; }

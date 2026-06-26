@@ -5,14 +5,24 @@
   <div class="container">
     <div class="card shadow-lg border-0">
       <div class="card-body p-4">
-        <div class="d-flex align-items-center gap-3 mb-4">
-          <div class="icon-circle" style="width:56px;height:56px;background:var(--primary-50);color:var(--primary);font-size:1.5rem;">
-            <i class="bi bi-person-circle"></i>
+        <div class="text-center mb-4">
+          <div class="position-relative d-inline-block">
+            <div id="photoPreview" class="rounded-circle overflow-hidden border border-4 border-primary" style="width:120px;height:120px;cursor:pointer;background:var(--primary-50);display:flex;align-items:center;justify-content:center;">
+              {% if worker.photo_url %}
+              <img src="{{ worker.photo_url }}" alt="{{ t.wp_photo }}" style="width:100%;height:100%;object-fit:cover;">
+              {% else %}
+              <i class="bi bi-person-fill" style="font-size:3rem;color:var(--primary);"></i>
+              {% endif %}
+            </div>
+            <div class="position-absolute bottom-0 end-0" style="transform:translate(5%,5%);">
+              <label for="photoInput" class="btn btn-primary btn-sm rounded-circle p-1 shadow" style="width:34px;height:34px;cursor:pointer;">
+                <i class="bi bi-camera-fill"></i>
+              </label>
+              <input type="file" id="photoInput" accept="image/*" class="d-none">
+            </div>
           </div>
-          <div>
-            <h4 class="fw-bold mb-1">{{ t.wp_title }}</h4>
-            <p class="text-secondary small mb-0">{{ t.wp_subtitle }}</p>
-          </div>
+          <h4 class="fw-bold mt-3 mb-1">{{ t.wp_title }}</h4>
+          <p class="text-secondary small mb-0">{{ t.wp_subtitle }}</p>
         </div>
 
         <form id="profileForm">
@@ -55,7 +65,135 @@
               </select>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary mt-4 px-4">
+
+          <hr class="my-4">
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ t.wp_bio }}</label>
+            <textarea name="bio" class="form-control" rows="4" placeholder="{{ t.wp_bio_placeholder }}">{{ worker.bio or '' }}</textarea>
+          </div>
+
+          <hr class="my-4">
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">{{ t.wp_skills }}</label>
+            <p class="text-secondary small mb-2">{{ t.wp_skills_hint }}</p>
+            <div class="d-flex gap-2 mb-2">
+              <input type="text" id="skillInput" class="form-control" placeholder="{{ t.wp_skills_hint }}">
+              <button type="button" id="addSkillBtn" class="btn btn-outline-primary flex-shrink-0">{{ t.wp_skills_add }}</button>
+            </div>
+            <div id="skillsContainer" class="d-flex flex-wrap gap-2 mb-2">
+              {% if worker.skills %}
+              {% for skill in worker.skills %}
+              <span class="badge bg-primary fs-6 px-3 py-2 skill-badge">{{ skill }} <i class="bi bi-x-circle ms-1 remove-skill" style="cursor:pointer;"></i></span>
+              {% endfor %}
+              {% endif %}
+            </div>
+            <input type="hidden" name="skills" id="skillsInput" value='{{ worker.skills | tojson if worker.skills else "[]" }}'>
+          </div>
+
+          <hr class="my-4">
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <label class="form-label fw-bold mb-0">{{ t.wp_experience }}</label>
+              <button type="button" id="addExpBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-circle ms-1"></i>{{ t.wp_experience_add }}</button>
+            </div>
+            <div id="experienceContainer">
+              {% if worker.experience %}
+              {% for exp in worker.experience %}
+              <div class="card border mb-3 experience-entry">
+                <div class="card-body position-relative">
+                  <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-exp"></button>
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <label class="form-label small">{{ t.wp_exp_title }}</label>
+                      <input type="text" class="form-control form-control-sm exp-title" value="{{ exp.title or '' }}" placeholder="{{ t.wp_exp_title }}">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label small">{{ t.wp_exp_company }}</label>
+                      <input type="text" class="form-control form-control-sm exp-company" value="{{ exp.company or '' }}" placeholder="{{ t.wp_exp_company }}">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label small">{{ t.wp_exp_start }}</label>
+                      <input type="date" class="form-control form-control-sm exp-start" value="{{ exp.start_date or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label small">{{ t.wp_exp_end }}</label>
+                      <input type="date" class="form-control form-control-sm exp-end" value="{{ exp.end_date or '' }}" {% if exp.is_current %}disabled{% endif %}>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                      <div class="form-check">
+                        <input type="checkbox" class="form-check-input exp-current" {% if exp.is_current %}checked{% endif %}>
+                        <label class="form-check-label small">{{ t.wp_exp_current }}</label>
+                      </div>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label small">{{ t.wp_exp_desc }}</label>
+                      <textarea class="form-control form-control-sm exp-desc" rows="2" placeholder="{{ t.wp_exp_desc }}">{{ exp.description or '' }}</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              {% endif %}
+            </div>
+            <input type="hidden" name="experience" id="experienceInput" value='{{ worker.experience | tojson if worker.experience else "[]" }}'>
+          </div>
+
+          <hr class="my-4">
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <label class="form-label fw-bold mb-0">{{ t.wp_education }}</label>
+              <button type="button" id="addEduBtn" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-circle ms-1"></i>{{ t.wp_education_add }}</button>
+            </div>
+            <div id="educationContainer">
+              {% if worker.education %}
+              {% for edu in worker.education %}
+              <div class="card border mb-3 education-entry">
+                <div class="card-body position-relative">
+                  <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-edu"></button>
+                  <div class="row g-2">
+                    <div class="col-md-4">
+                      <label class="form-label small">{{ t.wp_edu_degree }}</label>
+                      <input type="text" class="form-control form-control-sm edu-degree" value="{{ edu.degree or '' }}" placeholder="{{ t.wp_edu_degree }}">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small">{{ t.wp_edu_institution }}</label>
+                      <input type="text" class="form-control form-control-sm edu-institution" value="{{ edu.institution or '' }}" placeholder="{{ t.wp_edu_institution }}">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label small">{{ t.wp_edu_year }}</label>
+                      <input type="number" class="form-control form-control-sm edu-year" value="{{ edu.year or '' }}" placeholder="{{ t.wp_edu_year }}" min="1900" max="2099">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              {% endif %}
+            </div>
+            <input type="hidden" name="education" id="educationInput" value='{{ worker.education | tojson if worker.education else "[]" }}'>
+          </div>
+
+          <hr class="my-4">
+
+          <div class="mb-4">
+            <label class="form-label fw-bold">{{ t.wp_cv }}</label>
+            <p class="text-secondary small mb-2">{{ t.wp_cv_hint }}</p>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              {% if worker.cv_url %}
+              <a href="{{ worker.cv_url }}" target="_blank" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-pdf ms-1"></i>{{ t.wp_cv_uploaded }}</a>
+              <button type="button" id="deleteCvBtn" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash ms-1"></i>{{ t.wp_cv_delete }}</button>
+              {% endif %}
+              <label class="btn btn-outline-primary btn-sm mb-0">
+                <i class="bi bi-upload ms-1"></i>{{ t.wp_cv_hint }}
+                <input type="file" id="cvInput" accept=".pdf" class="d-none">
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary px-4 w-100 w-md-auto">
             <i class="bi bi-check2 ms-1"></i>{{ t.wp_save_btn }}
           </button>
         </form>
@@ -100,14 +238,260 @@
 {% endblock %}
 {% block extra_js %}
 <script>
+// ===== Photo Upload =====
+document.getElementById('photoInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  const btn = e.target;
+  try {
+    const res = await fetch('/api/worker/profile/upload-photo', { method:'POST', body: fd });
+    const json = await res.json();
+    if (json.success) {
+      document.getElementById('photoPreview').innerHTML = '<img src="'+json.url+'" alt="{{ t.wp_photo }}" style="width:100%;height:100%;object-fit:cover;">';
+    } else { alert(json.message); }
+  } catch(e) { alert('{{ t.error_connection }}'); }
+});
+
+// ===== Skills Tag Input =====
+const skillInput = document.getElementById('skillInput');
+const addSkillBtn = document.getElementById('addSkillBtn');
+const skillsContainer = document.getElementById('skillsContainer');
+const skillsInput = document.getElementById('skillsInput');
+
+function getSkills() {
+  try { return JSON.parse(skillsInput.value) || []; } catch(e) { return []; }
+}
+
+function setSkills(arr) {
+  skillsInput.value = JSON.stringify(arr);
+}
+
+function renderSkills() {
+  const skills = getSkills();
+  skillsContainer.innerHTML = skills.map(s => '<span class="badge bg-primary fs-6 px-3 py-2 skill-badge">'+s+' <i class="bi bi-x-circle ms-1 remove-skill" style="cursor:pointer;"></i></span>').join('');
+  document.querySelectorAll('.remove-skill').forEach((el, i) => {
+    el.addEventListener('click', () => {
+      const arr = getSkills();
+      arr.splice(i, 1);
+      setSkills(arr);
+      renderSkills();
+    });
+  });
+}
+
+function addSkill() {
+  const val = skillInput.value.trim();
+  if (!val) return;
+  const skills = getSkills();
+  if (!skills.includes(val)) {
+    skills.push(val);
+    setSkills(skills);
+    renderSkills();
+  }
+  skillInput.value = '';
+}
+
+addSkillBtn.addEventListener('click', addSkill);
+skillInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } });
+
+// ===== Work Experience =====
+const experienceContainer = document.getElementById('experienceContainer');
+const experienceInput = document.getElementById('experienceInput');
+
+function getExperience() {
+  try { return JSON.parse(experienceInput.value) || []; } catch(e) { return []; }
+}
+
+function setExperience(arr) {
+  experienceInput.value = JSON.stringify(arr);
+}
+
+function renderExperience() {
+  const list = getExperience();
+  experienceContainer.innerHTML = list.map((exp, i) => `
+    <div class="card border mb-3 experience-entry">
+      <div class="card-body position-relative">
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-exp" data-index="${i}"></button>
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label small">{{ t.wp_exp_title }}</label>
+            <input type="text" class="form-control form-control-sm exp-title" value="${exp.title || ''}" placeholder="{{ t.wp_exp_title }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small">{{ t.wp_exp_company }}</label>
+            <input type="text" class="form-control form-control-sm exp-company" value="${exp.company || ''}" placeholder="{{ t.wp_exp_company }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">{{ t.wp_exp_start }}</label>
+            <input type="date" class="form-control form-control-sm exp-start" value="${exp.start_date || ''}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">{{ t.wp_exp_end }}</label>
+            <input type="date" class="form-control form-control-sm exp-end" value="${exp.end_date || ''}" ${exp.is_current ? 'disabled' : ''}>
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input exp-current" ${exp.is_current ? 'checked' : ''}>
+              <label class="form-check-label small">{{ t.wp_exp_current }}</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label small">{{ t.wp_exp_desc }}</label>
+            <textarea class="form-control form-control-sm exp-desc" rows="2" placeholder="{{ t.wp_exp_desc }}">${exp.description || ''}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.remove-exp').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index);
+      const arr = getExperience();
+      arr.splice(idx, 1);
+      setExperience(arr);
+      renderExperience();
+    });
+  });
+  document.querySelectorAll('.exp-current').forEach((cb, i) => {
+    cb.addEventListener('change', () => {
+      const container = cb.closest('.experience-entry');
+      const endInput = container.querySelector('.exp-end');
+      endInput.disabled = cb.checked;
+      if (cb.checked) endInput.value = '';
+      syncExperience();
+    });
+  });
+  document.querySelectorAll('.experience-entry input, .experience-entry textarea').forEach(el => {
+    el.addEventListener('change', syncExperience);
+    el.addEventListener('input', syncExperience);
+  });
+}
+
+function syncExperience() {
+  const entries = document.querySelectorAll('.experience-entry');
+  const list = Array.from(entries).map(container => ({
+    title: container.querySelector('.exp-title').value,
+    company: container.querySelector('.exp-company').value,
+    start_date: container.querySelector('.exp-start').value,
+    end_date: container.querySelector('.exp-end').value,
+    is_current: container.querySelector('.exp-current').checked,
+    description: container.querySelector('.exp-desc').value
+  }));
+  setExperience(list);
+}
+
+document.getElementById('addExpBtn').addEventListener('click', () => {
+  const arr = getExperience();
+  arr.push({ title:'', company:'', start_date:'', end_date:'', is_current:false, description:'' });
+  setExperience(arr);
+  renderExperience();
+});
+
+// ===== Education =====
+const educationContainer = document.getElementById('educationContainer');
+const educationInput = document.getElementById('educationInput');
+
+function getEducation() {
+  try { return JSON.parse(educationInput.value) || []; } catch(e) { return []; }
+}
+
+function setEducation(arr) {
+  educationInput.value = JSON.stringify(arr);
+}
+
+function renderEducation() {
+  const list = getEducation();
+  educationContainer.innerHTML = list.map((edu, i) => `
+    <div class="card border mb-3 education-entry">
+      <div class="card-body position-relative">
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-edu" data-index="${i}"></button>
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label small">{{ t.wp_edu_degree }}</label>
+            <input type="text" class="form-control form-control-sm edu-degree" value="${edu.degree || ''}" placeholder="{{ t.wp_edu_degree }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">{{ t.wp_edu_institution }}</label>
+            <input type="text" class="form-control form-control-sm edu-institution" value="${edu.institution || ''}" placeholder="{{ t.wp_edu_institution }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small">{{ t.wp_edu_year }}</label>
+            <input type="number" class="form-control form-control-sm edu-year" value="${edu.year || ''}" placeholder="{{ t.wp_edu_year }}" min="1900" max="2099">
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.querySelectorAll('.remove-edu').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index);
+      const arr = getEducation();
+      arr.splice(idx, 1);
+      setEducation(arr);
+      renderEducation();
+    });
+  });
+  document.querySelectorAll('.education-entry input').forEach(el => {
+    el.addEventListener('change', syncEducation);
+    el.addEventListener('input', syncEducation);
+  });
+}
+
+function syncEducation() {
+  const entries = document.querySelectorAll('.education-entry');
+  const list = Array.from(entries).map(container => ({
+    degree: container.querySelector('.edu-degree').value,
+    institution: container.querySelector('.edu-institution').value,
+    year: container.querySelector('.edu-year').value
+  }));
+  setEducation(list);
+}
+
+document.getElementById('addEduBtn').addEventListener('click', () => {
+  const arr = getEducation();
+  arr.push({ degree:'', institution:'', year:'' });
+  setEducation(arr);
+  renderEducation();
+});
+
+// ===== CV Upload / Delete =====
+document.getElementById('cvInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    const res = await fetch('/api/worker/profile/upload-cv', { method:'POST', body: fd });
+    const json = await res.json();
+    if (json.success) { location.reload(); }
+    else { alert(json.message); }
+  } catch(e) { alert('{{ t.error_connection }}'); }
+});
+
+const deleteCvBtn = document.getElementById('deleteCvBtn');
+if (deleteCvBtn) {
+  deleteCvBtn.addEventListener('click', async () => {
+    if (!confirm('{{ t.wp_cv_delete }}?')) return;
+    try {
+      const res = await fetch('/api/worker/profile/delete-cv', { method:'POST' });
+      const json = await res.json();
+      if (json.success) { location.reload(); }
+      else { alert(json.message); }
+    } catch(e) { alert('{{ t.error_connection }}'); }
+  });
+}
+
+// ===== Form Submit =====
 document.getElementById('profileForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  syncExperience();
+  syncEducation();
   const form = e.target;
   const fd = new FormData(form);
-  const btn = form.querySelector('button');
+  const btn = form.querySelector('button[type="submit"]');
   btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.wp_saving }}';
   try {
-    const res = await fetch('/api/worker/profile', { method:'POST', body: fd });
+    const res = await fetch('/api/worker/profile/save', { method:'POST', body: fd });
     const json = await res.json();
     const msg = document.getElementById('profileMsg');
     if (json.success) {
@@ -119,6 +503,7 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
   finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2 ms-1"></i>{{ t.wp_save_btn }}'; }
 });
 
+// ===== ID Upload =====
 ['Front','Back'].forEach(side => {
   const area = document.getElementById('upload'+side);
   const input = document.getElementById('id'+side);
@@ -131,7 +516,7 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
       const json = await res.json();
       if (json.success) { location.reload(); }
       else { alert(json.message); }
-    } catch(e) { alert('{{ t.wp_upload_error }}'); }
+    } catch(e) { alert('{{ t.error_connection }}'); }
   });
 });
 </script>

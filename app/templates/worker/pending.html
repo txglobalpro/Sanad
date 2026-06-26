@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ t.wpending_title }} - Sanad{% endblock %}
 {% block content %}
+<section class="hero-section bg-primary text-white">
+  <div class="container">
+    <h4 class="fw-bold mb-1">{{ t.wpending_title }}</h4>
+    <p class="mb-0 opacity-75">{{ t.wpending_desc }}</p>
+  </div>
+</section>
+
 <section class="section-padding">
   <div class="container">
     <div class="row justify-content-center">

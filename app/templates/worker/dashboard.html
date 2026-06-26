@@ -23,7 +23,10 @@
     {% if not worker.first_name %}
     <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
       <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-      <span>{{ t.wd_incomplete }} <a href="/worker/profile" class="alert-link fw-bold">{{ t.wd_incomplete_link }}</a></span>
+      <div>
+        <strong>{{ t.wd_profile_missing }}</strong> {{ t.wd_complete_profile }}
+        <a href="/worker/profile" class="alert-link fw-bold">{{ t.wd_incomplete_link }}</a>
+      </div>
     </div>
     {% endif %}
     {% if not worker.is_approved %}
@@ -75,7 +78,56 @@
       </div>
     </div>
 
-    <div class="row g-4">
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4" id="statsContainer">
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+          <div class="card-body">
+            <div class="icon-circle mx-auto mb-2" style="width:48px;height:48px;background:var(--primary-50);color:var(--primary);">
+              <i class="bi bi-file-text fs-4"></i>
+            </div>
+            <h3 class="fw-bold mb-0" id="statApps">0</h3>
+            <small class="text-secondary">{{ t.wd_stats_apps }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+          <div class="card-body">
+            <div class="icon-circle mx-auto mb-2" style="width:48px;height:48px;background:#ecfdf5;color:var(--secondary);">
+              <i class="bi bi-bookmark fs-4"></i>
+            </div>
+            <h3 class="fw-bold mb-0" id="statSaved">0</h3>
+            <small class="text-secondary">{{ t.wd_stats_saved }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+          <div class="card-body">
+            <div class="icon-circle mx-auto mb-2" style="width:48px;height:48px;background:#fffbeb;color:var(--accent);">
+              <i class="bi bi-pie-chart fs-4"></i>
+            </div>
+            <h3 class="fw-bold mb-0" id="statCompletion">0%</h3>
+            <small class="text-secondary">{{ t.wd_stats_completion }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center h-100">
+          <div class="card-body">
+            <div class="icon-circle mx-auto mb-2" style="width:48px;height:48px;background:#fef2f2;color:#dc2626;">
+              <i class="bi bi-star fs-4"></i>
+            </div>
+            <h3 class="fw-bold mb-0" id="statSkills">0</h3>
+            <small class="text-secondary">{{ t.wd_stats_skills }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row g-4 mb-4">
       <div class="col-md-4">
         <div class="feature-card text-center">
           <div class="icon-circle" style="background:var(--primary-50);color:var(--primary);">
@@ -107,11 +159,58 @@
         </div>
       </div>
     </div>
+
+    <!-- Recent Applications -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-clock-history ms-2" style="color:var(--primary)"></i>{{ t.wd_recent_apps }}</h5>
+        <a href="/worker/applications" class="btn btn-outline-primary btn-sm">{{ t.wd_view_all_apps }}</a>
+      </div>
+      <div class="card-body" id="recentAppsContainer">
+        <div class="text-center py-4 text-secondary">
+          <div class="spinner-border spinner-border-sm ms-2" role="status"></span>{{ t.loading }}
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 {% endblock %}
 {% block extra_js %}
 <script>
+// ===== Load Stats =====
+(async function loadStats() {
+  try {
+    const res = await fetch('/api/worker/stats');
+    const data = await res.json();
+    if (data) {
+      document.getElementById('statApps').textContent = data.applications || 0;
+      document.getElementById('statSaved').textContent = data.saved_jobs || 0;
+      document.getElementById('statCompletion').textContent = (data.completion || 0) + '%';
+      document.getElementById('statSkills').textContent = data.skills_count || 0;
+    }
+  } catch(e) {}
+})();
+
+// ===== Load Recent Applications =====
+(async function loadRecentApps() {
+  try {
+    const res = await fetch('/api/worker/stats');
+    const stats = await res.json();
+    const container = document.getElementById('recentAppsContainer');
+    if (stats && stats.applications > 0) {
+      // Show recent apps from the applications page render
+      const appsRes = await fetch('/worker/applications?format=json');
+      // Fallback: just show count and link
+      container.innerHTML = '<div class="text-center py-4"><i class="bi bi-check-circle text-success fs-1 d-block mb-2"></i><p class="text-secondary mb-2">{{ t.wd_stats_apps }}: <strong>'+stats.applications+'</strong></p><a href="/worker/applications" class="btn btn-primary btn-sm">{{ t.wd_view_all_apps }}</a></div>';
+    } else {
+      container.innerHTML = '<div class="text-center py-4"><i class="bi bi-inbox fs-1 text-secondary d-block mb-2"></i><p class="text-secondary mb-0">{{ t.wd_no_recent }}</p><a href="/worker/jobs" class="btn btn-primary btn-sm mt-2">{{ t.wd_jobs_btn }}</a></div>';
+    }
+  } catch(e) {
+    document.getElementById('recentAppsContainer').innerHTML = '<div class="text-center py-4 text-secondary">{{ t.wd_no_recent }}</div>';
+  }
+})();
+
+// ===== Deposit Modal =====
 document.getElementById('depositForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = e.target.querySelector('button[type="submit"]');

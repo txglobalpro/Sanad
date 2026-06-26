@@ -527,7 +527,9 @@ async def close_job(request: Request, job_id: str):
 
 # ==================== Reviews & Wallets Initialization ====================
 
-CREATE_REVIEWS_SQL = """
+# ==================== Database Init ====================
+
+CREATE_TABLES_SQL = """
 CREATE TABLE IF NOT EXISTS reviews (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   reviewer_name TEXT NOT NULL,
@@ -537,9 +539,6 @@ CREATE TABLE IF NOT EXISTS reviews (
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-"""
-
-CREATE_WALLETS_SQL = """
 CREATE TABLE IF NOT EXISTS wallets (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL UNIQUE,
@@ -556,9 +555,6 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
   description TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-"""
-
-CREATE_SAVED_JOBS_SQL = """
 CREATE TABLE IF NOT EXISTS saved_jobs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   worker_id UUID REFERENCES workers(id),
@@ -566,59 +562,38 @@ CREATE TABLE IF NOT EXISTS saved_jobs (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(worker_id, job_id)
 );
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT DEFAULT 'info',
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  sender_id TEXT NOT NULL,
+  sender_name TEXT DEFAULT '',
+  receiver_id TEXT NOT NULL,
+  job_id TEXT,
+  content TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS bio TEXT;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS photo_url TEXT;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS skills JSONB DEFAULT '[]';
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS experience JSONB DEFAULT '[]';
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS education JSONB DEFAULT '[]';
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS cv_url TEXT;
+ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_name TEXT;
+ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_logo TEXT;
+ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_description TEXT;
+ALTER TABLE employers ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
 """
 
-WORKER_NAMES = [
-    "أحمد الخطيب", "محمود الحسن", "علي خالد", "حسن مراد", "خالد العلي",
-    "عمران العبد", "باسل زيدان", "نور الدين", "سامر عبود", "وائل السيد",
-    "محمد جابر", "حسام الدين", "مصطفى كريم", "يزن محمود", "عبد الرحمن",
-    "بسام الرفاعي", "غسان نعيم", "رامي شوقي", "حازم نور", "قتيبة زاهر",
-    "مهند الصالح", "أيمن فؤاد", "أنس خليل", "همام بشار", "عماد جمال",
-    "ديما السيد", "رؤى عمر", "سارة علي", "نورا حسان", "ميرا عبد الله",
-    "لينا سامر", "سلمى كمال", "رنا زاهر", "هدى إبراهيم", "فاطمة عادل"
-]
-EMPLOYER_NAMES = [
-    "شركة الأمل للتجارة", "مؤسسة النور", "مجموعة الفيحاء", "شركة قاسيون",
-    "مكتب السلام العقاري", "مطعم دمشق القديم", "مستشفى الشفاء", "شركة آراد",
-    "بنك سورية الدولي", "جامعة القلمون", "فندق شيراتون دمشق", "مركز سما",
-    "مؤسسة الينابيع", "شركة أوغاريت", "مجموعة العلي", "مكتب المحامي الدرويش",
-    "مطعم جبل العرب", "مخبز الياسمين", "شركة سورية أونلاين", "مستوصف الخير",
-    "مؤسسة ركن الشام", "شركة التاج الذهبي", "مكتب المهندس جواد", "فندق صحارى",
-    "معمل سجاد حمص", "شركة البركة", "مؤسسة النجاح", "مركز التدريب المهني",
-    "مطعم وادي العذيب", "شركة السورية للتأمين", "مجموعة الإخاء", "مكتب السياحة"
-]
-REVIEWS_WORKER_TEMPLATES = [
-    "عامل ممتاز ونظيف جداً، التزم بالمواعيد وأنهى العمل بكفاءة عالية. أنصح به بشدة.",
-    "تعاملت مع هذا العامل وكان محترفاً جداً. عمل دقيق ونظافة ممتازة. سأتعامل معه مرة أخرى.",
-    "عمل رائع! العامل كان خلوقاً ومحترماً وأنهى كل المهام المطلوبة في الوقت المحدد.",
-    "تجربة ممتازة، العامل محترف وأدواته كاملة. النتيجة كانت أفضل مما توقعت.",
-    "ممتاز! تعامل محترف وسعر معقول. العامل كان محترماً جداً وأنهى العمل بسرعة.",
-    "أشكر هذا العامل على جهوده، عمل متقن ونظافة رائعة. أوصي به لكل من يبحث عن عامل محترف.",
-    "العامل كان خلوقاً جداً وأنجز العمل بشكل ممتاز. المنصة سهّلت عملية التواصل.",
-    "أول مرة استخدم فيها المنصة وكانت تجربة رائعة. العامل محترف والنتيجة ممتازة.",
-    "من أفضل العمال الذين تعاملت معهم. دقة في العمل واحترام في التعامل.",
-    "تجربة ناجحة، العامل ملتزم ومواعيده مضبوطة. شكراً لكم."
-]
-REVIEWS_EMPLOYER_TEMPLATES = [
-    "صاحب عمل محترم جداً، دفع الأجر كاملاً وفي الوقت المحدد. عمل معه أكثر من مرة.",
-    "تعامل مع صاحب العمل وكان مثالياً. أوضح المطلوب بدقة وكان كريماً في التقييم.",
-    "صاحب عمل خلوق ويراعي ظروف العمال. تجربة عمل ممتعة وأتمنى العمل معه مرة أخرى.",
-    "ممتاز! صاحب العمل وفّر كل المستلزمات اللازمة وكان التعامل راقياً جداً.",
-    "تجربة ممتازة مع صاحب عمل محترف. فهم طبيعة العمل وكان عادلاً في التقييم.",
-    "صاحب العمل كان متفاهماً جداً وسهل التعامل. دفع الأجر فور انتهاء العمل.",
-    "أفضل صاحب عمل تعاملت معه. محترم وكريم ويعامل العامل باحترام.",
-    "تجربة ممتازة! أوصي بالعمل مع هذا الشخص لأي عامل. بيئة عمل مريحة.",
-    "صاحب عمل منظم وواضح. الشرح كان دقيقاً والمطلوب كان واضحاً منذ البداية.",
-    "تعاملت معه لأكثر من مرة. شخص محترم وملتزم بوعوده. شكراً لك."
-]
-
-async def ensure_reviews_table():
-    loop = asyncio.get_event_loop()
-    try:
-        result = await asyncio.wait_for(loop.run_in_executor(None, lambda: supabase_admin.table("reviews").select("id", count="exact").limit(1).execute()), timeout=15)
-        return True
-    except Exception:
-        pass
+async def execute_sql(query: str):
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
@@ -628,49 +603,29 @@ async def ensure_reviews_table():
                     "Content-Type": "application/json",
                     "Accept": "application/json"
                 },
-                json={"query": CREATE_REVIEWS_SQL}
+                json={"query": query}
             )
             if resp.status_code >= 400:
-                print(f"WARN: Failed to create reviews table: {resp.status_code} {resp.text[:200]}")
-                return False
-            print("Created reviews table successfully")
-            return True
+                print(f"  SQL status={resp.status_code}: {resp.text[:150]}")
+            return resp
     except Exception as e:
-        print(f"WARN: Could not create reviews table: {e}")
-        return False
+        print(f"  SQL error: {e}")
+        return None
 
-async def seed_reviews(target_role, names, templates, count=500):
-    batch_size = 50
-    batch = []
-    for i in range(count):
-        name = random.choice(names)
-        rating = random.choices([5, 4, 3, 2, 1], weights=[55, 30, 10, 3, 2])[0]
-        content = random.choice(templates)
-        batch.append({
-            "reviewer_name": name,
-            "reviewer_role": "employer" if target_role == "worker" else "worker",
-            "target_role": target_role,
-            "rating": rating,
-            "content": content
-        })
-        if len(batch) >= batch_size:
-            try:
-                loop = asyncio.get_event_loop()
-                await loop.run_in_executor(None, lambda: supabase_admin.table("reviews").insert(batch).execute())
-                print(f"  Seeded {len(batch)} {target_role} reviews")
-            except Exception as e:
-                print(f"  WARN: insert batch failed: {e}")
-            batch = []
-    if batch:
-        try:
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, lambda: supabase_admin.table("reviews").insert(batch).execute())
-            print(f"  Seeded final {len(batch)} {target_role} reviews")
-        except Exception as e:
-            print(f"  WARN: insert final batch failed: {e}")
+async def create_notification(user_id: str, title: str, message: str, type: str = "info"):
+    try:
+        supabase_admin.table("notifications").insert({
+            "user_id": user_id, "title": title, "message": message, "type": type
+        }).execute()
+    except Exception:
+        pass
 
 @app.on_event("startup")
 async def init_database():
+    for stmt in CREATE_TABLES_SQL.split(";"):
+        s = stmt.strip()
+        if s:
+            await execute_sql(s + ";")
     print("Startup complete - server ready")
 
 @app.get("/api/reviews/all")
@@ -716,6 +671,303 @@ async def deposit_wallet(request: Request, amount: int = Form(...), description:
             "wallet_id": wallet["id"], "amount": amount, "type": "deposit", "description": description or "إيداع"
         }).execute()
     return {"success": True, "balance": new_balance}
+
+# ==================== Enhanced Worker Profile Routes ====================
+
+@app.post("/api/worker/profile/save")
+async def save_worker_profile_full(request: Request, first_name: str = Form(...), last_name: str = Form(...), age: int = Form(...), gender: str = Form(...), nationality: str = Form(...), phone: str = Form(...), city: str = Form(...), bio: str = Form(""), skills: str = Form("[]"), experience: str = Form("[]"), education: str = Form("[]")):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    try:
+        import json as j
+        skills_data = j.loads(skills) if isinstance(skills, str) else skills
+        exp_data = j.loads(experience) if isinstance(experience, str) else experience
+        edu_data = j.loads(education) if isinstance(education, str) else education
+        supabase_admin.table("workers").update({
+            "first_name": first_name, "last_name": last_name, "age": age,
+            "gender": gender, "nationality": nationality, "phone": phone, "city": city,
+            "bio": bio, "skills": skills_data, "experience": exp_data, "education": edu_data
+        }).eq("user_id", user["sub"]).execute()
+        return {"success": True, "message": "تم حفظ الملف الشخصي"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.post("/api/worker/profile/upload-photo")
+async def upload_worker_photo(request: Request, file: UploadFile = File(...)):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    try:
+        os.makedirs("app/static/uploads", exist_ok=True)
+        ext = pathlib.Path(file.filename).suffix or ".jpg"
+        filename = f"photo_{user['sub'][:8]}_{uuid.uuid4().hex[:8]}{ext}"
+        content = await file.read()
+        with open(f"app/static/uploads/{filename}", "wb") as f:
+            f.write(content)
+        url = f"/static/uploads/{filename}"
+        supabase_admin.table("workers").update({"photo_url": url}).eq("user_id", user["sub"]).execute()
+        return {"success": True, "url": url}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.post("/api/worker/profile/upload-cv")
+async def upload_worker_cv(request: Request, file: UploadFile = File(...)):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    try:
+        os.makedirs("app/static/uploads", exist_ok=True)
+        ext = pathlib.Path(file.filename).suffix or ".pdf"
+        filename = f"cv_{user['sub'][:8]}_{uuid.uuid4().hex[:8]}{ext}"
+        content = await file.read()
+        with open(f"app/static/uploads/{filename}", "wb") as f:
+            f.write(content)
+        url = f"/static/uploads/{filename}"
+        supabase_admin.table("workers").update({"cv_url": url}).eq("user_id", user["sub"]).execute()
+        return {"success": True, "url": url}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.post("/api/worker/profile/delete-cv")
+async def delete_worker_cv(request: Request):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    try:
+        supabase_admin.table("workers").update({"cv_url": None}).eq("user_id", user["sub"]).execute()
+        return {"success": True}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.get("/api/worker/stats")
+async def worker_stats(request: Request):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "worker": raise HTTPException(403)
+    wid = profile["data"]["id"]
+    apps = supabase.table("applications").select("id", count="exact").eq("worker_id", wid).execute()
+    saved = supabase_admin.table("saved_jobs").select("id", count="exact").eq("worker_id", wid).execute()
+    w = profile["data"]
+    fields = [w.get("bio"), w.get("photo_url"), w.get("skills"), w.get("experience"), w.get("education"), w.get("id_image_front"), w.get("id_image_back")]
+    filled = sum(1 for f in fields if f and f != "[]" and f != [])
+    pct = min(100, int(filled / len(fields) * 100))
+    skills_count = len(w.get("skills", [])) if isinstance(w.get("skills"), (list, tuple)) else 0
+    return {"applications": len(apps.data or []), "saved_jobs": len(saved.data or []), "completion": pct, "skills_count": skills_count}
+
+# ==================== Employer Profile Routes ====================
+
+@app.get("/employer/profile", response_class=HTMLResponse)
+async def employer_profile_page(request: Request):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
+    return render_template(request, "employer/profile.html", user=user, employer=profile["data"])
+
+@app.post("/api/employer/profile/save")
+async def save_employer_profile(request: Request, company_name: str = Form(""), company_description: str = Form("")):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    try:
+        supabase_admin.table("employers").update({
+            "company_name": company_name, "company_description": company_description
+        }).eq("user_id", user["sub"]).execute()
+        return {"success": True, "message": "تم حفظ الملف الشخصي"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.post("/api/employer/profile/upload-logo")
+async def upload_employer_logo(request: Request, file: UploadFile = File(...)):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    try:
+        os.makedirs("app/static/uploads", exist_ok=True)
+        ext = pathlib.Path(file.filename).suffix or ".png"
+        filename = f"logo_{user['sub'][:8]}_{uuid.uuid4().hex[:8]}{ext}"
+        content = await file.read()
+        with open(f"app/static/uploads/{filename}", "wb") as f:
+            f.write(content)
+        url = f"/static/uploads/{filename}"
+        supabase_admin.table("employers").update({"company_logo": url}).eq("user_id", user["sub"]).execute()
+        return {"success": True, "url": url}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+# ==================== Notifications Routes ====================
+
+@app.get("/notifications", response_class=HTMLResponse)
+async def notifications_page(request: Request):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    notifs = supabase_admin.table("notifications").select("*").eq("user_id", user["sub"]).order("created_at", desc=True).limit(50).execute()
+    return render_template(request, "notifications.html", user=user, notifications=notifs.data or [])
+
+@app.get("/api/notifications/unread")
+async def unread_notifications(request: Request):
+    user = await get_current_user(request)
+    if not user: return {"count": 0}
+    result = supabase_admin.table("notifications").select("id", count="exact").eq("user_id", user["sub"]).eq("is_read", False).execute()
+    return {"count": result.count or 0}
+
+@app.get("/api/notifications")
+async def get_notifications(request: Request):
+    user = await get_current_user(request)
+    if not user: return {"data": []}
+    result = supabase_admin.table("notifications").select("*").eq("user_id", user["sub"]).order("created_at", desc=True).limit(50).execute()
+    return {"data": result.data or []}
+
+@app.post("/api/notifications/mark-read")
+async def mark_notifications_read(request: Request):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    supabase_admin.table("notifications").update({"is_read": True}).eq("user_id", user["sub"]).execute()
+    return {"success": True}
+
+# ==================== Messages Routes ====================
+
+@app.get("/messages", response_class=HTMLResponse)
+async def messages_page(request: Request):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    return render_template(request, "messages.html", user=user)
+
+@app.get("/api/messages/conversations")
+async def get_conversations(request: Request):
+    user = await get_current_user(request)
+    if not user: return {"data": []}
+    sent = supabase_admin.table("messages").select("*").eq("sender_id", user["sub"]).order("created_at", desc=True).execute()
+    received = supabase_admin.table("messages").select("*").eq("receiver_id", user["sub"]).order("created_at", desc=True).execute()
+    return {"data": (sent.data or []) + (received.data or [])}
+
+@app.post("/api/messages/send")
+async def send_message(request: Request, receiver_id: str = Form(...), content: str = Form(...), job_id: str = Form("")):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    name = ""
+    if profile and profile.get("data"):
+        p = profile["data"]
+        name = p.get("first_name", "") + " " + p.get("last_name", "") if profile["type"] == "worker" else p.get("company_name", "") or (p.get("first_name", "") + " " + p.get("last_name", ""))
+    try:
+        supabase_admin.table("messages").insert({
+            "sender_id": user["sub"], "sender_name": name.strip(),
+            "receiver_id": receiver_id, "job_id": job_id or None,
+            "content": content
+        }).execute()
+        # notify receiver
+        await create_notification(receiver_id, "رسالة جديدة", f"لديك رسالة جديدة من {name.strip() or 'مستخدم'}", "message")
+        return {"success": True}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.get("/api/messages/{user_id}")
+async def get_messages_with(request: Request, user_id: str):
+    user = await get_current_user(request)
+    if not user: return {"data": []}
+    result = supabase_admin.table("messages").select("*").or_(
+        f"and(sender_id.eq.{user['sub']},receiver_id.eq.{user_id})",
+        f"and(sender_id.eq.{user_id},receiver_id.eq.{user['sub']})"
+    ).order("created_at").execute()
+    supabase_admin.table("messages").update({"is_read": True}).eq("sender_id", user_id).eq("receiver_id", user["sub"]).execute()
+    return {"data": result.data or []}
+
+# ==================== Add notifications to existing routes ====================
+
+# Override apply to include notification
+@app.post("/api/worker/apply/{job_id}")
+async def apply_job_with_notif(request: Request, job_id: str):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "worker": raise HTTPException(403)
+    existing = supabase.table("applications").select("*").eq("job_id", job_id).eq("worker_id", profile["data"]["id"]).execute()
+    if existing.data:
+        return JSONResponse({"success": False, "message": "لقد تقدمت لهذه الفرصة مسبقاً"}, status_code=400)
+    supabase_admin.table("applications").insert({
+        "job_id": job_id, "worker_id": profile["data"]["id"], "status": "pending"
+    }).execute()
+    # Notify employer
+    job = supabase.table("jobs").select("*, employers(*)").eq("id", job_id).single().execute()
+    if job.data and job.data.get("employers") and job.data["employers"].get("user_id"):
+        wname = f"{profile['data'].get('first_name','')} {profile['data'].get('last_name','')}"
+        await create_notification(job.data["employers"]["user_id"], "تقدم جديد", f"تقدم {wname.strip() or 'عامل'} لفرصة '{job.data.get('title','')}'", "application")
+    return {"success": True, "message": "تم التقديم على الفرصة بنجاح"}
+
+@app.post("/api/employer/accept-application/{application_id}")
+async def accept_application_with_notif(request: Request, application_id: str):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": raise HTTPException(403)
+    try:
+        app_data = supabase.table("applications").select("*, workers(*), jobs(*)").eq("id", application_id).single().execute()
+        if app_data.data:
+            supabase_admin.table("applications").update({"status": "accepted"}).eq("id", application_id).execute()
+            if app_data.data.get("workers") and app_data.data["workers"].get("user_id"):
+                await create_notification(app_data.data["workers"]["user_id"], "تم قبول طلبك", f"تم قبول طلبك لفرصة '{app_data.data.get('jobs',{}).get('title','')}'", "success")
+        return {"success": True, "message": "تم قبول المتقدم"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.post("/api/employer/reject-application/{application_id}")
+async def reject_application_with_notif(request: Request, application_id: str):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": raise HTTPException(403)
+    try:
+        app_data = supabase.table("applications").select("*, workers(*), jobs(*)").eq("id", application_id).single().execute()
+        if app_data.data:
+            supabase_admin.table("applications").update({"status": "rejected"}).eq("id", application_id).execute()
+            if app_data.data.get("workers") and app_data.data["workers"].get("user_id"):
+                await create_notification(app_data.data["workers"]["user_id"], "تم رفض طلبك", f"نأسف، تم رفض طلبك لفرصة '{app_data.data.get('jobs',{}).get('title','')}'", "error")
+        return {"success": True, "message": "تم رفض المتقدم"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+# ==================== Enhanced Admin Routes ====================
+
+@app.post("/api/admin/verify-employer/{employer_id}")
+async def verify_employer(request: Request, employer_id: str):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
+    supabase_admin.table("employers").update({"is_verified": True}).eq("id", employer_id).execute()
+    return {"success": True}
+
+@app.post("/api/admin/unverify-employer/{employer_id}")
+async def unverify_employer(request: Request, employer_id: str):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
+    supabase_admin.table("employers").update({"is_verified": False}).eq("id", employer_id).execute()
+    return {"success": True}
+
+@app.post("/api/admin/delete-employer/{employer_id}")
+async def delete_employer(request: Request, employer_id: str):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
+    try:
+        supabase_admin.table("jobs").delete().eq("employer_id", employer_id).execute()
+        supabase_admin.table("employers").delete().eq("id", employer_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+# ==================== Employer Stats API ====================
+
+@app.get("/api/employer/stats")
+async def employer_stats_api(request: Request):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": raise HTTPException(403)
+    eid = profile["data"]["id"]
+    jobs = supabase.table("jobs").select("*").eq("employer_id", eid).execute()
+    active = [j for j in (jobs.data or []) if j.get("status") == "open"]
+    total_apps = 0
+    pending_apps = 0
+    for j in jobs.data or []:
+        apps = supabase.table("applications").select("id,status").eq("job_id", j["id"]).execute()
+        total_apps += len(apps.data or [])
+        pending_apps += sum(1 for a in (apps.data or []) if a.get("status") == "pending")
+    return {"active_jobs": len(active), "total_applications": total_apps, "pending_applications": pending_apps}
 
 @app.get("/api/set-lang/{lang}")
 async def set_lang(lang: str):

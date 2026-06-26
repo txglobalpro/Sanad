@@ -139,31 +139,67 @@
         </div>
       </div>
 
-      <!-- Employers -->
+      <!-- Employers Management -->
       <div class="col-12">
         <div class="card shadow-sm border-0">
-          <div class="card-header bg-white fw-bold"><i class="bi bi-briefcase text-primary ms-2"></i>{{ t.ad_employers_header }}</div>
+          <div class="card-header bg-white fw-bold"><i class="bi bi-building text-primary ms-2"></i>{{ t.ad_manage_employers }}</div>
           <div class="card-body">
+            {% if employers %}
             <div class="table-responsive">
               <table class="table table-hover">
                 <thead>
                   <tr>
                     <th>{{ t.ad_th_name }}</th>
-                    <th>{{ t.ad_th_phone }}</th>
                     <th>{{ t.ad_th_city }}</th>
+                    <th>{{ t.ad_th_phone }}</th>
+                    <th>{{ t.ed_th_status }}</th>
+                    <th>{{ t.ad_th_register_date }}</th>
+                    <th>{{ t.ad_th_action }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for e in employers %}
                   <tr>
-                    <td class="fw-medium">{{ e.first_name or '' }} {{ e.last_name or '' }}</td>
-                    <td dir="ltr" style="text-align:right">{{ e.phone or '' }}</td>
+                    <td class="fw-medium">{{ e.company_name or e.email or '' }}</td>
                     <td>{{ e.city or t.not_specified }}</td>
+                    <td dir="ltr" style="text-align:right">{{ e.phone or '' }}</td>
+                    <td>
+                      {% if e.is_verified %}
+                        <span class="badge bg-success">{{ t.ad_employer_verified }}</span>
+                      {% else %}
+                        <span class="badge bg-warning">{{ t.ad_employer_pending }}</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ e.created_at[:10] if e.created_at else '' }}</td>
+                    <td>
+                      {% if e.is_verified %}
+                        <button class="btn btn-sm btn-outline-warning" onclick="unverifyEmployer('{{ e.id }}')">
+                          <i class="bi bi-x-circle ms-1"></i>{{ t.ad_unverify_employer }}
+                        </button>
+                      {% else %}
+                        <button class="btn btn-sm btn-success" onclick="verifyEmployer('{{ e.id }}')">
+                          <i class="bi bi-check-circle ms-1"></i>{{ t.ad_verify_employer }}
+                        </button>
+                      {% endif %}
+                      <a href="/employer/profile/{{ e.id }}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-eye ms-1"></i>{{ t.ad_view_employer }}
+                      </a>
+                      <button class="btn btn-sm btn-danger" onclick="deleteEmployer('{{ e.id }}')">
+                        <i class="bi bi-trash ms-1"></i>{{ t.ad_delete_employer }}
+                      </button>
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>
               </table>
             </div>
+            {% else %}
+            <div class="empty-state text-center">
+              <i class="bi bi-building text-muted"></i>
+              <h5>{{ t.ad_pending_empty_title }}</h5>
+              <p class="text-secondary">{{ t.ad_pending_empty_desc }}</p>
+            </div>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -232,6 +268,21 @@ async function rejectWorker(id) {
 async function closeJob(id) {
   if (!confirm('{{ t.ad_confirm_close }}')) return;
   await fetch('/api/admin/close-job/'+id, { method:'POST' });
+  location.reload();
+}
+async function verifyEmployer(id) {
+  if (!confirm('{{ t.ad_confirm_verify }}')) return;
+  await fetch('/api/admin/verify-employer/'+id, { method:'POST' });
+  location.reload();
+}
+async function unverifyEmployer(id) {
+  if (!confirm('{{ t.ad_confirm_verify }}')) return;
+  await fetch('/api/admin/unverify-employer/'+id, { method:'POST' });
+  location.reload();
+}
+async function deleteEmployer(id) {
+  if (!confirm('{{ t.ad_confirm_delete_employer }}')) return;
+  await fetch('/api/admin/delete-employer/'+id, { method:'POST' });
   location.reload();
 }
 </script>

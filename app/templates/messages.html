@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}{{ t.msg_title }} - Sanad{% endblock %}
+{% block meta_desc %}{{ t.msg_title }}{% endblock %}
+{% block content %}
+
+<section class="hero-section bg-primary text-white">
+  <div class="container text-center">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <h1 class="display-5 fw-bold mb-2">{{ t.msg_title }}</h1>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    <div class="row" style="min-height:60vh;">
+      <div class="col-lg-4 mb-3 mb-lg-0">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-bottom py-3">
+            <h6 class="fw-bold mb-0">{{ t.msg_title }}</h6>
+          </div>
+          <div id="conversationsList" class="list-group list-group-flush overflow-auto" style="max-height:500px;">
+            <div class="text-center py-4 text-secondary small">
+              <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+              <div>{{ t.loading }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100 d-flex flex-column">
+          <div id="messagesPanel" class="flex-grow-1 overflow-auto p-3" style="max-height:450px;">
+            <div class="text-center py-5 text-secondary empty-state">
+              <div class="icon-circle mx-auto mb-3" style="width:80px;height:80px;background:var(--primary-50);color:var(--primary);">
+                <i class="bi bi-chat-dots fs-1"></i>
+              </div>
+              <h5 class="fw-bold">{{ t.msg_empty }}</h5>
+              <p class="small mb-0">{{ t.msg_no_conversations }}</p>
+            </div>
+          </div>
+          <div id="sendArea" class="card-footer bg-white border-top p-3 d-none">
+            <form id="sendForm" class="d-flex gap-2">
+              <input type="hidden" id="receiverId" value="">
+              <input type="text" id="msgInput" class="form-control" placeholder="{{ t.msg_placeholder }}" required autocomplete="off">
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-send ms-1"></i>{{ t.msg_send }}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+{% block extra_js %}
+<style>
+.conversation-item { cursor:pointer; transition:background 0.2s; }
+.conversation-item:hover { background:var(--primary-50); }
+.conversation-item.active { background:var(--primary-50); border-inline-start:3px solid var(--primary); }
+.message-bubble { max-width:80%; padding:10px 14px; border-radius:16px; word-wrap:break-word; }
+.message-sent { background:var(--primary); color:#fff; border-end-start-radius:4px; align-self:flex-end; }
+.message-received { background:#f1f5f9; color:inherit; border-end-end-radius:4px; align-self:flex-start; }
+[data-theme="dark"] .message-received { background:#1e293b; }
+</style>
+<script>
+(function() {
+  var currentUserId = null;
+  var conversationsList = document.getElementById('conversationsList');
+  var messagesPanel = document.getElementById('messagesPanel');
+  var sendArea = document.getElementById('sendArea');
+  var sendForm = document.getElementById('sendForm');
+  var receiverId = document.getElementById('receiverId');
+  var msgInput = document.getElementById('msgInput');
+
+  function loadConversations() {
+    fetch('/api/messages/conversations')
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (!json.conversations || json.conversations.length === 0) {
+          conversationsList.innerHTML =
+            '<div class="text-center py-4 text-secondary small empty-state">' +
+            '  <i class="bi bi-chat-dots d-block fs-3 mb-2"></i>' +
+            '  <div>{{ t.msg_no_conversations }}</div>' +
+            '</div>';
+          return;
+        }
+        var html = '';
+        for (var i = 0; i < json.conversations.length; i++) {
+          var c = json.conversations[i];
+          var cls = 'list-group-item list-group-item-action border-0 conversation-item';
+          if (currentUserId && c.user_id === currentUserId) cls += ' active';
+          var preview = c.last_message || '';
+          if (preview.length > 50) preview = preview.substring(0, 50) + '...';
+          html +=
+            '<a href="#" class="' + cls + '" data-user-id="' + c.user_id + '">' +
+            '  <div class="d-flex align-items-center gap-2">' +
+            '    <div class="rounded-circle bg-primary-50 text-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width:40px;height:40px;font-weight:700;">' +
+            '      ' + (c.name ? c.name.charAt(0) : '?') +
+            '    </div>' +
+            '    <div class="min-w-0 flex-grow-1">' +
+            '      <div class="fw-bold small text-truncate">' + (c.name || '') + '</div>' +
+            '      <small class="text-secondary text-truncate d-block">' + preview + '</small>' +
+            '    </div>' +
+            '  </div>' +
+            '</a>';
+        }
+        conversationsList.innerHTML = html;
+
+        Array.from(conversationsList.querySelectorAll('.conversation-item')).forEach(function(el) {
+          el.addEventListener('click', function(e) {
+            e.preventDefault();
+            var uid = this.getAttribute('data-user-id');
+            loadMessages(uid);
+            Array.from(conversationsList.querySelectorAll('.conversation-item')).forEach(function(x) {
+              x.classList.remove('active');
+            });
+            this.classList.add('active');
+          });
+        });
+      })
+      .catch(function() {
+        conversationsList.innerHTML =
+          '<div class="text-center py-4 text-danger small">' +
+          '  <i class="bi bi-exclamation-triangle d-block fs-3 mb-2"></i>' +
+          '  <div>{{ t.error_connection }}</div>' +
+          '</div>';
+      });
+  }
+
+  function loadMessages(userId) {
+    currentUserId = userId;
+    receiverId.value = userId;
+    sendArea.classList.remove('d-none');
+    messagesPanel.innerHTML =
+      '<div class="text-center py-4 text-secondary small"><div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div><div>{{ t.loading }}</div></div>';
+
+    fetch('/api/messages/' + userId)
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (!json.messages || json.messages.length === 0) {
+          messagesPanel.innerHTML =
+            '<div class="text-center py-5 text-secondary empty-state">' +
+            '  <div class="icon-circle mx-auto mb-3" style="width:80px;height:80px;background:var(--primary-50);color:var(--primary);">' +
+            '    <i class="bi bi-chat-dots fs-1"></i>' +
+            '  </div>' +
+            '  <h5 class="fw-bold">{{ t.msg_empty }}</h5>' +
+            '  <p class="small mb-0">{{ t.msg_placeholder }}</p>' +
+            '</div>';
+          return;
+        }
+        var html = '<div class="d-flex flex-column gap-2">';
+        for (var i = 0; i < json.messages.length; i++) {
+          var m = json.messages[i];
+          var isSent = String(m.sender_id) === String(json.current_user_id);
+          var cls = isSent ? 'message-sent' : 'message-received';
+          var info = isSent ? '{{ t.msg_sent }}' : ('{{ t.msg_from }} ' + (m.sender_name || ''));
+          html +=
+            '<div class="message-bubble ' + cls + '">' +
+            '  <div class="small">' + (m.content || '') + '</div>' +
+            '  <small class="d-block text-end mt-1" style="font-size:0.65rem;opacity:0.75;">' + info + '</small>' +
+            '</div>';
+        }
+        html += '</div>';
+        messagesPanel.innerHTML = html;
+        messagesPanel.scrollTop = messagesPanel.scrollHeight;
+      })
+      .catch(function() {
+        messagesPanel.innerHTML =
+          '<div class="text-center py-4 text-danger small">' +
+          '  <i class="bi bi-exclamation-triangle d-block fs-3 mb-2"></i>' +
+          '  <div>{{ t.error_connection }}</div>' +
+          '</div>';
+      });
+  }
+
+  sendForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var content = msgInput.value.trim();
+    var uid = receiverId.value;
+    if (!content || !uid) return;
+
+    var btn = sendForm.querySelector('button');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    fetch('/api/messages/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ receiver_id: parseInt(uid), content: content })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (json.success) {
+        msgInput.value = '';
+        loadMessages(uid);
+      }
+    })
+    .catch(function() {})
+    .finally(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-send ms-1"></i>{{ t.msg_send }}';
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', loadConversations);
+})();
+</script>
+{% endblock %}

@@ -10,6 +10,43 @@
 
 <section class="section-padding">
   <div class="container">
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4" id="statsContainer">
+      <div class="col-4">
+        <div class="card border-0 shadow-sm text-center h-100">
+          <div class="card-body">
+            <div class="icon-circle mx-auto mb-2" style="width:48px;height:48px;background:#ecfdf5;color:var(--secondary);">
+              <i class="bi bi-briefcase fs-4"></i>
+            </div>
+            <h3 class="fw-bold mb-0" id="statActive">0</h3>
+            <small class="text-secondary">{{ t.ed_stats_active }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card border-0 shadow-sm text-center h-100">
+          <div class="card-body">
+            <div class="icon-circle mx-auto mb-2" style="width:48px;height:48px;background:var(--primary-50);color:var(--primary);">
+              <i class="bi bi-people fs-4"></i>
+            </div>
+            <h3 class="fw-bold mb-0" id="statApps">0</h3>
+            <small class="text-secondary">{{ t.ed_stats_apps }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card border-0 shadow-sm text-center h-100">
+          <div class="card-body">
+            <div class="icon-circle mx-auto mb-2" style="width:48px;height:48px;background:#fffbeb;color:var(--accent);">
+              <i class="bi bi-clock-history fs-4"></i>
+            </div>
+            <h3 class="fw-bold mb-0" id="statPending">0</h3>
+            <small class="text-secondary">{{ t.ed_stats_pending }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Wallet Card -->
     <div class="row g-4 mb-4">
       <div class="col-12">
@@ -19,8 +56,35 @@
               <small class="opacity-75">{{ t.wallet_balance }}</small>
               <h3 class="fw-bold mb-0" style="font-size:1.8rem;"><span id="walletBalance">{{ wallet.balance if wallet else 0 }}</span> ل.س</h3>
             </div>
-            <i class="bi bi-wallet2" style="font-size:2.5rem;opacity:0.5;"></i>
+            <div class="d-flex flex-column align-items-end gap-2">
+              <i class="bi bi-wallet2" style="font-size:2.5rem;opacity:0.5;"></i>
+              <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#depositModal">
+                <i class="bi bi-plus-circle ms-1"></i>{{ t.wallet_deposit_btn }}
+              </button>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div class="modal fade" id="depositModal" tabindex="-1">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h6 class="modal-title fw-bold">{{ t.wallet_deposit_modal_title }}</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <form id="depositForm">
+            <div class="modal-body">
+              <label class="form-label">{{ t.wallet_deposit_label }}</label>
+              <input type="number" name="amount" class="form-control" min="1" required placeholder="{{ t.wallet_deposit_placeholder }}">
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ t.cancel }}</button>
+              <button type="submit" class="btn btn-success btn-sm">{{ t.wallet_deposit_btn }}</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -52,7 +116,7 @@
                     <th>{{ t.ed_th_city }}</th>
                     <th>{{ t.ed_th_pay }}</th>
                     <th>{{ t.ed_th_status }}</th>
-                    <th></th>
+                    <th>{{ t.ed_stats_apps }}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -63,9 +127,11 @@
                     <td>{{ job.city }}</td>
                     <td>{{ job.pay }} ل.س</td>
                     <td><span class="badge {% if job.status == 'open' %}bg-success{% else %}bg-secondary{% endif %}">{% if job.status == 'open' %}{{ t.ed_status_open }}{% else %}{{ t.ed_status_closed }}{% endif %}</span></td>
-                    <td><a href="/employer/jobs/{{ job.id }}/applicants" class="btn btn-sm btn-outline-primary">
-                      <i class="bi bi-people ms-1"></i>{{ t.ed_applicants_btn }}
-                    </a></td>
+                    <td>
+                      <a href="/employer/jobs/{{ job.id }}/applicants" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-people ms-1"></i>{{ job.applicant_count or 0 }}
+                      </a>
+                    </td>
                     <td>
                       <a href="/employer/edit-job/{{ job.id }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i> {{ t.ed_edit }}</a>
                       <button onclick="deleteJob('{{ job.id }}')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> {{ t.ed_delete }}</button>
@@ -79,6 +145,7 @@
             <div class="empty-state text-center">
               <i class="bi bi-briefcase"></i>
               <h5>{{ t.ed_empty_title }}</h5>
+              <p class="mb-3">{{ t.ed_no_jobs }}</p>
               <a href="/employer/post-job" class="btn btn-success mt-2">{{ t.ed_empty_btn }}</a>
             </div>
             {% endif %}
@@ -86,11 +153,102 @@
         </div>
       </div>
     </div>
+
+    <!-- Pending Applicants Summary -->
+    {% set ns = namespace(has_pending = False) %}
+    {% for job in jobs %}
+      {% if job.pending_count is defined and job.pending_count > 0 %}
+        {% set ns.has_pending = True %}
+      {% endif %}
+    {% endfor %}
+    {% if ns.has_pending %}
+    <div class="card border-0 shadow-sm mt-4">
+      <div class="card-header bg-white fw-bold d-flex align-items-center gap-2">
+        <i class="bi bi-clock-history text-warning"></i>
+        {{ t.ed_recent_apps }}
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{{ t.ed_th_title }}</th>
+                <th>{{ t.ed_stats_pending }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in jobs %}
+              {% if job.pending_count is defined and job.pending_count > 0 %}
+              <tr>
+                <td class="fw-medium">{{ job.title }}</td>
+                <td><span class="badge bg-warning">{{ job.pending_count }} {{ t.ea_status_pending }}</span></td>
+                <td><a href="/employer/jobs/{{ job.id }}/applicants" class="btn btn-sm btn-outline-primary">{{ t.ed_view_all }}</a></td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Wallet Transactions -->
+    <div class="card border-0 shadow-sm mt-4">
+      <div class="card-header bg-white fw-bold d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left-right text-success"></i>
+        {{ t.wallet_transactions }}
+      </div>
+      <div class="card-body">
+        {% if wallet and wallet.transactions and wallet.transactions|length > 0 %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{{ t.wallet_amount }}</th>
+                <th>{{ t.wallet_type }}</th>
+                <th>{{ t.wallet_date }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tx in wallet.transactions[:10] %}
+              <tr>
+                <td class="fw-bold {% if tx.type == 'deposit' %}text-success{% else %}text-danger{% endif %}">{{ tx.amount }} ل.س</td>
+                <td><span class="badge {% if tx.type == 'deposit' %}bg-success{% else %}bg-secondary{% endif %}">{{ tx.type }}</span></td>
+                <td class="text-secondary small">{{ tx.created_at[:10] if tx.created_at else '' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-3 text-secondary">
+          <i class="bi bi-inbox fs-1 d-block mb-2" style="color:var(--dark-300);"></i>
+          <p class="mb-0">{{ t.wallet_no_transactions }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </section>
 {% endblock %}
 {% block extra_js %}
 <script>
+// ===== Load Stats =====
+(async function loadStats() {
+  try {
+    const res = await fetch('/api/employer/stats');
+    const data = await res.json();
+    if (data) {
+      document.getElementById('statActive').textContent = data.active_jobs || 0;
+      document.getElementById('statApps').textContent = data.total_applicants || 0;
+      document.getElementById('statPending').textContent = data.pending_review || 0;
+    }
+  } catch(e) {}
+})();
+
+// ===== Delete Job =====
 function deleteJob(jobId) {
   if (!confirm('{{ t.ed_confirm_delete }}')) return;
   const btn = event.target.closest('button');
@@ -99,9 +257,28 @@ function deleteJob(jobId) {
     .then(r => r.json())
     .then(json => {
       if (json.success) { location.reload(); }
-      else { alert(json.message); btn.disabled = false; btn.innerHTML = '<i class="bi bi-trash"></i>'; }
+      else { alert(json.message); btn.disabled = false; btn.innerHTML = '<i class="bi bi-trash"></i> {{ t.ed_delete }}'; }
     })
-    .catch(() => { alert('{{ t.error_connection }}'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-trash"></i>'; });
+    .catch(() => { alert('{{ t.error_connection }}'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-trash"></i> {{ t.ed_delete }}'; });
 }
+
+// ===== Deposit Modal =====
+document.getElementById('depositForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>';
+  const fd = new FormData(e.target);
+  try {
+    const res = await fetch('/api/wallet/deposit', { method:'POST', body: fd });
+    const json = await res.json();
+    if (json.success) {
+      document.getElementById('walletBalance').textContent = json.balance;
+      const modal = bootstrap.Modal.getInstance(document.getElementById('depositModal'));
+      if (modal) modal.hide();
+      alert('{{ t.wallet_deposit_success }}');
+    } else { alert(json.message); }
+  } catch(e) { alert('{{ t.error_connection }}'); }
+  finally { btn.disabled = false; btn.innerHTML = '{{ t.wallet_deposit_btn }}'; }
+});
 </script>
 {% endblock %}

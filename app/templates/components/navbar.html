@@ -55,6 +55,8 @@
           {% if user.role == 'worker' %}
           <li class="nav-item d-lg-none"><a class="nav-link" href="/worker/profile"><i class="bi bi-person ms-1"></i>{{ t.nav_profile }}</a></li>
           {% endif %}
+          <li class="nav-item d-lg-none"><a class="nav-link" href="/notifications"><i class="bi bi-bell ms-1"></i>{{ t.nav_notifications }}</a></li>
+          <li class="nav-item d-lg-none"><a class="nav-link" href="/messages"><i class="bi bi-chat-dots ms-1"></i>{{ t.nav_messages }}</a></li>
           <li class="nav-item d-lg-none"><a class="nav-link" href="/about">{{ t.nav_about }}</a></li>
           <li class="nav-item d-lg-none"><a class="nav-link" href="/contact">{{ t.nav_contact }}</a></li>
           <li class="nav-item d-lg-none"><a class="nav-link text-danger" href="/api/auth/logout"><i class="bi bi-box-arrow-left ms-1"></i>{{ t.nav_logout }}</a></li>
@@ -67,6 +69,13 @@
 
     {% if user %}
     <div class="d-none d-lg-flex align-items-center gap-2 me-2 user-menu-wrapper">
+      <a href="/notifications" class="notif-btn-icon" aria-label="{{ t.nav_notifications }}">
+        <i class="bi bi-bell fs-5"></i>
+        <span id="notifBadge" class="notif-badge d-none">0</span>
+      </a>
+      <a href="/messages" class="nav-link px-1" aria-label="{{ t.nav_messages }}">
+        <i class="bi bi-chat-dots fs-5"></i>
+      </a>
       {% set full_name = (user.first_name + ' ' + user.last_name) if (user.first_name and user.last_name) else user.email.split('@')[0] %}
       <span id="userNameDisplay" class="small fw-medium text-secondary" style="white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="{{ full_name }}">
         {{ full_name }}
@@ -82,6 +91,8 @@
         {% if user.role == 'worker' %}
           <a class="dropdown-item" href="/worker/profile"><i class="bi bi-person ms-2"></i>{{ t.nav_profile }}</a>
         {% endif %}
+        <a class="dropdown-item" href="/notifications"><i class="bi bi-bell ms-2"></i>{{ t.nav_notifications }}</a>
+        <a class="dropdown-item" href="/messages"><i class="bi bi-chat-dots ms-2"></i>{{ t.nav_messages }}</a>
         <a class="dropdown-item" href="/about">{{ t.nav_about }}</a>
         <a class="dropdown-item" href="/contact">{{ t.nav_contact }}</a>
         <hr>
@@ -99,6 +110,17 @@
       const b = document.getElementById('userMenuToggle');
       if (p && !p.contains(e.target) && !b.contains(e.target)) p.classList.remove('show');
     });
+    {% if user %}
+    fetch('/api/notifications/unread')
+      .then(r => r.json())
+      .then(d => {
+        const badge = document.getElementById('notifBadge');
+        if (d.count && d.count > 0) {
+          badge.textContent = d.count;
+          badge.classList.remove('d-none');
+        }
+      }).catch(() => {});
+    {% endif %}
     </script>
     {% endif %}
   </div>
