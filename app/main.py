@@ -589,34 +589,35 @@ async def seed_reviews(target_role, names, templates, count=500):
         })
         if len(batch) >= batch_size:
             try:
-                supabase_admin.table("reviews").insert(batch).execute()
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, lambda: supabase_admin.table("reviews").insert(batch).execute())
                 print(f"  Seeded {len(batch)} {target_role} reviews")
             except Exception as e:
                 print(f"  WARN: insert batch failed: {e}")
             batch = []
     if batch:
         try:
-            supabase_admin.table("reviews").insert(batch).execute()
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, lambda: supabase_admin.table("reviews").insert(batch).execute())
             print(f"  Seeded final {len(batch)} {target_role} reviews")
         except Exception as e:
             print(f"  WARN: insert final batch failed: {e}")
 
-@app.on_event("startup")
-async def init_database():
+async def _init_background():
     loop = asyncio.get_event_loop()
     try:
-        ok = await asyncio.wait_for(ensure_reviews_table(), timeout=20)
+        ok = await ensure_reviews_table()
         if ok:
             result = await asyncio.wait_for(loop.run_in_executor(None, lambda: supabase_admin.table("reviews").select("id").limit(1).execute()), timeout=15)
             if not result.data:
                 print("Seeding reviews...")
-                await asyncio.wait_for(seed_reviews("worker", EMPLOYER_NAMES, REVIEWS_WORKER_TEMPLATES, 500), timeout=30)
-                await asyncio.wait_for(seed_reviews("employer", WORKER_NAMES, REVIEWS_EMPLOYER_TEMPLATES, 500), timeout=30)
+                await seed_reviews("worker", EMPLOYER_NAMES, REVIEWS_WORKER_TEMPLATES, 500)
+                await seed_reviews("employer", WORKER_NAMES, REVIEWS_EMPLOYER_TEMPLATES, 500)
                 print("Seeding complete")
             else:
                 print("Reviews table already has data, skipping seed")
     except Exception as e:
-        print(f"WARN: init_database failed (non-fatal): {e}")
+        print(f"WARN: init_database reviews failed: {e}")
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
@@ -651,6 +652,11 @@ async def init_database():
                 print(f"WARN: Failed to create saved_jobs table: {resp.status_code} {resp.text[:200]}")
     except Exception as e:
         print(f"WARN: Could not create saved_jobs table: {e}")
+
+@app.on_event("startup")
+async def init_database():
+    asyncio.ensure_future(_init_background())
+    print("Startup complete - background tasks scheduled")
 
 @app.get("/api/reviews/all")
 async def get_all_reviews(limit: int = 60):
