@@ -95,6 +95,7 @@
 {% endblock %}
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = e.target;
@@ -135,6 +136,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     errDiv.classList.remove('d-none');
   }
   finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-plus ms-1"></i>{{ t.register_btn }}'; }
+});
 });
 </script>
 {% endblock %}
