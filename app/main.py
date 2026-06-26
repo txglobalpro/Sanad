@@ -603,60 +603,9 @@ async def seed_reviews(target_role, names, templates, count=500):
         except Exception as e:
             print(f"  WARN: insert final batch failed: {e}")
 
-async def _init_background():
-    loop = asyncio.get_event_loop()
-    try:
-        ok = await ensure_reviews_table()
-        if ok:
-            result = await asyncio.wait_for(loop.run_in_executor(None, lambda: supabase_admin.table("reviews").select("id").limit(1).execute()), timeout=15)
-            if not result.data:
-                print("Seeding reviews...")
-                await seed_reviews("worker", EMPLOYER_NAMES, REVIEWS_WORKER_TEMPLATES, 500)
-                await seed_reviews("employer", WORKER_NAMES, REVIEWS_EMPLOYER_TEMPLATES, 500)
-                print("Seeding complete")
-            else:
-                print("Reviews table already has data, skipping seed")
-    except Exception as e:
-        print(f"WARN: init_database reviews failed: {e}")
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(
-                f"https://api.supabase.com/v1/projects/{SUPABASE_PROJECT_REF}/database/query",
-                headers={
-                    "Authorization": f"Bearer {SUPABASE_MGMT_TOKEN}",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                json={"query": CREATE_WALLETS_SQL}
-            )
-            if resp.status_code < 400:
-                print("Created wallets tables successfully")
-            else:
-                print(f"WARN: Failed to create wallets table: {resp.status_code} {resp.text[:200]}")
-    except Exception as e:
-        print(f"WARN: Could not create wallets table: {e}")
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(
-                f"https://api.supabase.com/v1/projects/{SUPABASE_PROJECT_REF}/database/query",
-                headers={
-                    "Authorization": f"Bearer {SUPABASE_MGMT_TOKEN}",
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                json={"query": CREATE_SAVED_JOBS_SQL}
-            )
-            if resp.status_code < 400:
-                print("Created saved_jobs table successfully")
-            else:
-                print(f"WARN: Failed to create saved_jobs table: {resp.status_code} {resp.text[:200]}")
-    except Exception as e:
-        print(f"WARN: Could not create saved_jobs table: {e}")
-
 @app.on_event("startup")
 async def init_database():
-    asyncio.ensure_future(_init_background())
-    print("Startup complete - background tasks scheduled")
+    print("Startup complete - server ready")
 
 @app.get("/api/reviews/all")
 async def get_all_reviews(limit: int = 60):
