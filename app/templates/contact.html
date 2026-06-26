@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ t.contact_title }} - Sanad{% endblock %}
+{% block meta_desc %}{{ t.contact_meta }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="text-center mb-5 animate-fade-in-up">
+        <h1 class="fw-bold display-5">{{ t.contact_heading }}</h1>
+        <p class="text-secondary lead">{{ t.contact_subtitle }}</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-5 animate-fade-in-up stagger-1">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h6 class="fw-bold mb-3">{{ t.footer_contact }}</h6>
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="icon-circle bg-primary-50 text-primary" style="width:40px;height:40px;min-width:40px;">
+                  <i class="bi bi-envelope"></i>
+                </div>
+                <div>
+                  <small class="text-secondary">{{ t.contact_email_label }}</small>
+                  <div class="fw-medium">{{ t.contact_email_addr }}</div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="icon-circle bg-primary-50 text-primary" style="width:40px;height:40px;min-width:40px;">
+                  <i class="bi bi-telephone"></i>
+                </div>
+                <div>
+                  <small class="text-secondary">{{ t.contact_phone_label }}</small>
+                  <div class="fw-medium">{{ t.contact_phone }}</div>
+                </div>
+              </div>
+              <hr>
+              <div class="social-links d-flex gap-2">
+                <a href="#" class="btn btn-outline-primary btn-sm rounded-circle" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="btn btn-outline-primary btn-sm rounded-circle" aria-label="Telegram"><i class="bi bi-telegram"></i></a>
+                <a href="#" class="btn btn-outline-primary btn-sm rounded-circle" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-7 animate-fade-in-up stagger-2">
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <form id="contactForm">
+                <div class="mb-3">
+                  <label class="form-label">{{ t.contact_name }}</label>
+                  <input type="text" name="name" class="form-control" required placeholder="{{ t.contact_name }}">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">{{ t.contact_email }}</label>
+                  <input type="email" name="email" class="form-control" required placeholder="{{ t.contact_email }}">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">{{ t.contact_message }}</label>
+                  <textarea name="message" class="form-control" rows="4" required placeholder="{{ t.contact_message }}"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">
+                  <i class="bi bi-send ms-1"></i>{{ t.contact_send }}
+                </button>
+              </form>
+              <div id="contactSuccess" class="alert alert-success mt-3 d-none">{{ t.contact_success }}</div>
+              <div id="contactError" class="alert alert-danger mt-3 d-none"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('contactForm');
+  if (!form) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>...';
+    const data = { name: form.name.value, email: form.email.value, message: form.message.value };
+    try {
+      const res = await fetch('/api/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('contactSuccess').classList.remove('d-none');
+        document.getElementById('contactError').classList.add('d-none');
+        form.reset();
+      } else {
+        const err = document.getElementById('contactError');
+        err.textContent = json.message || '{{ t.contact_error }}';
+        err.classList.remove('d-none');
+      }
+    } catch(e) {
+      const err = document.getElementById('contactError');
+      err.textContent = '{{ t.contact_error }}';
+      err.classList.remove('d-none');
+    }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-send ms-1"></i>{{ t.contact_send }}'; }
+  });
+});
+</script>
+{% endblock %}

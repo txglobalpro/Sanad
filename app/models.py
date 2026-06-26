@@ -17,6 +17,11 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+class ContactForm(BaseModel):
+    name: str
+    email: str
+    message: str
+
 class WorkerProfile(BaseModel):
     first_name: str
     last_name: str

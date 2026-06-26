@@ -12,7 +12,7 @@ import uuid
 
 from app.config import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, SUPABASE_MGMT_TOKEN
 from app.database import supabase, supabase_admin
-from app.models import UserRegister, UserLogin, WorkerProfile, JobCreate
+from app.models import UserRegister, UserLogin, WorkerProfile, JobCreate, ContactForm
 from app.translations import AR, EN
 
 TRANSLATIONS = {"ar": AR, "en": EN}
@@ -118,6 +118,24 @@ async def login_page(request: Request):
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     return render_template(request, "auth/register.html")
+
+@app.get("/about", response_class=HTMLResponse)
+async def about_page(request: Request):
+    user = await get_current_user(request)
+    return render_template(request, "about.html", user=user)
+
+@app.get("/contact", response_class=HTMLResponse)
+async def contact_page(request: Request):
+    user = await get_current_user(request)
+    return render_template(request, "contact.html", user=user)
+
+@app.post("/api/contact")
+async def contact_form(data: ContactForm):
+    try:
+        print(f"Contact form: {data.name} <{data.email}>: {data.message[:50]}...")
+        return {"success": True, "message": "{{ t.contact_success }}"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
 
 # ==================== Auth Routes ====================
 

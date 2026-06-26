@@ -326,6 +326,43 @@ AR = {
 
     # Verified badge
     "verified": "موثق",
+
+    # About page
+    "about_title": "عن Sanad",
+    "about_meta": "تعرف على Sanad، منصة التوظيف السورية الموثوقة التي تربط العمال وأصحاب العمل في جميع المحافظات",
+    "about_heading": "مهمتنا",
+    "about_mission": "Sanad هي أول منصة سورية موثوقة تربط العمال وأصحاب العمل في جميع المحافظات السورية الـ 14. نؤمن أن لكل عامل سوري مجتهد الحق بفرص عمل عادلة، ولكل صاحب عمل الحق بعمال جديرين بالثقة.",
+    "about_vision_title": "رؤيتنا",
+    "about_vision": "سورية حيث يجد كل عامل عملاً لائقاً ويجد كل صاحب عمل أيادٍ أمينة — بأمان وسرعة ومجاناً.",
+    "about_values_title": "قيمنا",
+    "about_value1_title": "الثقة",
+    "about_value1_desc": "جميع العمال يمرون بعملية تحقق هوية لضمان الأمان للطرفين.",
+    "about_value2_title": "مجاني للجميع",
+    "about_value2_desc": "المنصة مجانية بالكامل. لا رسوم على العمال ولا على أصحاب العمل.",
+    "about_value3_title": "سورية أولاً",
+    "about_value3_desc": "مبني ١٠٠٪ لسورية — جميع المحافظات الـ 14، جميع أنواع العمل، جميع السوريين.",
+
+    # Contact page
+    "contact_title": "اتصل بنا",
+    "contact_meta": "تواصل مع فريق Sanad. نحن هنا للمساعدة.",
+    "contact_heading": "يسعدنا تواصلك معنا",
+    "contact_subtitle": "لديك سؤال، اقتراح، أو تحتاج مساعدة؟ تواصل معنا.",
+    "contact_name": "الاسم",
+    "contact_email": "البريد الإلكتروني",
+    "contact_message": "رسالتك",
+    "contact_send": "إرسال",
+    "contact_success": "شكراً! تم إرسال رسالتك بنجاح.",
+    "contact_error": "فشل الإرسال. حاول مرة أخرى لاحقاً.",
+    "contact_phone_label": "هاتف",
+    "contact_phone": "+963 900 000 000",
+    "contact_email_label": "بريد إلكتروني",
+    "contact_email_addr": "info@sanad.com",
+
+    # Nav/Footer links
+    "nav_about": "عن المنصة",
+    "nav_contact": "اتصل بنا",
+    "footer_about_link": "عن Sanad",
+    "footer_contact_link": "اتصل بنا",
 }
 
 EN = {
@@ -657,4 +694,41 @@ EN = {
 
     # Verified badge
     "verified": "Verified",
+
+    # About page
+    "about_title": "About Sanad",
+    "about_meta": "Learn about Sanad, Syria's trusted jobs platform connecting workers and employers across all governorates",
+    "about_heading": "Our Mission",
+    "about_mission": "Sanad is Syria's first reliable platform connecting workers and employers across all 14 governorates. We believe every hardworking Syrian deserves fair job opportunities and every employer deserves trustworthy workers.",
+    "about_vision_title": "Our Vision",
+    "about_vision": "A Syria where every worker finds dignified work and every employer finds reliable hands — safely, quickly, and free of charge.",
+    "about_values_title": "Our Values",
+    "about_value1_title": "Trust",
+    "about_value1_desc": "All workers undergo identity verification to ensure safety for both parties.",
+    "about_value2_title": "Free for All",
+    "about_value2_desc": "The platform is completely free. No fees for workers or employers.",
+    "about_value3_title": "Syria First",
+    "about_value3_desc": "100% built for Syria — all 14 governorates, all job types, all Syrians.",
+
+    # Contact page
+    "contact_title": "Contact Us",
+    "contact_meta": "Get in touch with the Sanad team. We're here to help.",
+    "contact_heading": "We'd Love to Hear From You",
+    "contact_subtitle": "Have a question, suggestion, or need help? Reach out to us.",
+    "contact_name": "Your Name",
+    "contact_email": "Your Email",
+    "contact_message": "Your Message",
+    "contact_send": "Send Message",
+    "contact_success": "Thank you! Your message has been sent.",
+    "contact_error": "Failed to send. Please try again later.",
+    "contact_phone_label": "Phone",
+    "contact_phone": "+963 900 000 000",
+    "contact_email_label": "Email",
+    "contact_email_addr": "info@sanad.com",
+
+    # Nav/Footer links
+    "nav_about": "About",
+    "nav_contact": "Contact",
+    "footer_about_link": "About Sanad",
+    "footer_contact_link": "Contact Us",
 }

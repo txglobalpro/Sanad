@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ t.about_title }} - Sanad{% endblock %}
+{% block meta_desc %}{{ t.about_meta }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="text-center mb-5 animate-fade-in-up">
+        <img src="/static/images/logo.svg" alt="Sanad" height="64" class="mb-3" loading="lazy">
+        <h1 class="fw-bold display-5">{{ t.about_heading }}</h1>
+        <p class="text-secondary lead">{{ t.about_mission }}</p>
+      </div>
+
+      <div class="row g-4 mb-5">
+        <div class="col-md-6 animate-fade-in-up stagger-1">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle bg-primary-50 text-primary mb-3 mx-auto" style="width:56px;height:56px;">
+                <i class="bi bi-eye fs-4"></i>
+              </div>
+              <h5 class="fw-bold">{{ t.about_vision_title }}</h5>
+              <p class="text-secondary small mb-0">{{ t.about_vision }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 animate-fade-in-up stagger-2">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4 text-center">
+              <div class="icon-circle bg-primary-50 text-primary mb-3 mx-auto" style="width:56px;height:56px;">
+                <i class="bi bi-stars fs-4"></i>
+              </div>
+              <h5 class="fw-bold">{{ t.about_values_title }}</h5>
+              <p class="text-secondary small mb-0">{{ t.about_mission[:80] }}...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="fw-bold text-center mb-4">{{ t.about_values_title }}</h3>
+      <div class="row g-3 mb-5">
+        <div class="col-md-4 animate-fade-in-up stagger-1">
+          <div class="card border-0 shadow-sm h-100 text-center">
+            <div class="card-body p-4">
+              <div class="icon-circle bg-success-50 text-success mb-3 mx-auto" style="width:48px;height:48px;">
+                <i class="bi bi-shield-check fs-5"></i>
+              </div>
+              <h6 class="fw-bold">{{ t.about_value1_title }}</h6>
+              <p class="text-secondary small mb-0">{{ t.about_value1_desc }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 animate-fade-in-up stagger-2">
+          <div class="card border-0 shadow-sm h-100 text-center">
+            <div class="card-body p-4">
+              <div class="icon-circle bg-warning-50 text-warning mb-3 mx-auto" style="width:48px;height:48px;">
+                <i class="bi bi-currency-exchange fs-5"></i>
+              </div>
+              <h6 class="fw-bold">{{ t.about_value2_title }}</h6>
+              <p class="text-secondary small mb-0">{{ t.about_value2_desc }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 animate-fade-in-up stagger-3">
+          <div class="card border-0 shadow-sm h-100 text-center">
+            <div class="card-body p-4">
+              <div class="icon-circle bg-info-50 text-info mb-3 mx-auto" style="width:48px;height:48px;">
+                <i class="bi bi-globe-asia-australia fs-5"></i>
+              </div>
+              <h6 class="fw-bold">{{ t.about_value3_title }}</h6>
+              <p class="text-secondary small mb-0">{{ t.about_value3_desc }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
