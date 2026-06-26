@@ -4,22 +4,24 @@
       <img src="/static/images/logo.svg" alt="Sanad" height="32" class="d-inline-block align-top ms-2">
       {{ t.site_name }}
     </a>
+
     <div class="d-flex align-items-center gap-1 order-lg-3">
       {% if user and user.role == 'worker' %}
-        <a class="nav-link d-lg-none px-1" href="/worker/profile" aria-label="{{ t.nav_profile }}">
+        <a class="d-lg-none nav-link px-1" href="/worker/profile" aria-label="{{ t.nav_profile }}">
           <i class="bi bi-person-circle fs-5"></i>
         </a>
       {% elif user %}
-        <span class="nav-link d-lg-none px-1">
+        <span class="d-lg-none nav-link px-1">
           <i class="bi bi-person-circle fs-5"></i>
         </span>
       {% else %}
-        <a class="btn btn-primary btn-sm d-lg-none ms-1" href="/login">{{ t.nav_login }}</a>
+        <a class="btn btn-primary btn-sm d-lg-none" href="/login">{{ t.nav_login }}</a>
       {% endif %}
-      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="{{ t.nav_home }}">
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
     </div>
+
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="/">{{ t.nav_home }}</a></li>
@@ -37,6 +39,7 @@
           {% endif %}
         {% endif %}
       </ul>
+
       <ul class="navbar-nav align-items-lg-center gap-1">
         <li class="nav-item">
           <button id="themeToggle" class="btn btn-sm nav-link border-0" aria-label="{{ t.dark_mode }}" style="background:none;">
@@ -49,28 +52,43 @@
           </a>
         </li>
         {% if user %}
-          <li class="nav-item dropdown d-none d-lg-block ps-3">
-            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-person-circle fs-5"></i>
-              <span class="d-none d-xl-inline">{{ (user.first_name + ' ' + user.last_name) if (user.first_name and user.last_name) else user.email }}</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><span class="dropdown-item-text small text-secondary d-flex align-items-center gap-2">
-                <i class="bi bi-wallet2"></i> {{ t.wallet_balance }}: <strong id="walletBalance" class="text-primary">{% if wallet %}{{ wallet.balance }}{% else %}0{% endif %}</strong> ل.س
-              </span></li>
-              <li><hr class="dropdown-divider"></li>
-              {% if user.role == 'worker' %}
-                <li><a class="dropdown-item" href="/worker/profile"><i class="bi bi-person ms-2"></i>{{ t.nav_profile }}</a></li>
-              {% endif %}
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="/api/auth/logout"><i class="bi bi-box-arrow-left ms-2"></i>{{ t.nav_logout }}</a></li>
-            </ul>
-          </li>
+          {% if user.role == 'worker' %}
+          <li class="nav-item d-lg-none"><a class="nav-link" href="/worker/profile"><i class="bi bi-person ms-1"></i>{{ t.nav_profile }}</a></li>
+          {% endif %}
+          <li class="nav-item d-lg-none"><a class="nav-link" href="/about">{{ t.nav_about }}</a></li>
+          <li class="nav-item d-lg-none"><a class="nav-link" href="/contact">{{ t.nav_contact }}</a></li>
+          <li class="nav-item d-lg-none"><a class="nav-link text-danger" href="/api/auth/logout"><i class="bi bi-box-arrow-left ms-1"></i>{{ t.nav_logout }}</a></li>
         {% else %}
           <li class="nav-item d-none d-lg-block"><a class="nav-link" href="/login">{{ t.nav_login }}</a></li>
           <li class="nav-item d-none d-lg-block"><a class="btn btn-primary btn-sm" href="/register">{{ t.nav_register }}</a></li>
         {% endif %}
       </ul>
     </div>
+
+    {% if user %}
+    <div class="d-none d-lg-flex align-items-center gap-2 me-2">
+      <span class="small text-secondary" style="white-space:nowrap;">
+        {{ (user.first_name + ' ' + user.last_name) if (user.first_name and user.last_name) else '' }}
+      </span>
+      <div class="dropdown">
+        <button class="btn btn-sm nav-link py-0 border-0 dropdown-toggle d-flex align-items-center gap-1" id="userDropdownDesktop" data-bs-toggle="dropdown" aria-expanded="false" style="background:none;">
+          <i class="bi bi-person-circle fs-5"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdownDesktop" style="min-width:180px;">
+          <li><span class="dropdown-item-text small text-secondary d-flex align-items-center gap-2 py-1">
+            <i class="bi bi-wallet2"></i> {{ t.wallet_balance }}: <strong id="walletBalance">{% if wallet %}{{ wallet.balance }}{% else %}0{% endif %}</strong> ل.س
+          </span></li>
+          <li><hr class="dropdown-divider my-1"></li>
+          {% if user.role == 'worker' %}
+            <li><a class="dropdown-item py-1" href="/worker/profile"><i class="bi bi-person ms-2"></i>{{ t.nav_profile }}</a></li>
+          {% endif %}
+          <li><a class="dropdown-item py-1" href="/about">{{ t.nav_about }}</a></li>
+          <li><a class="dropdown-item py-1" href="/contact">{{ t.nav_contact }}</a></li>
+          <li><hr class="dropdown-divider my-1"></li>
+          <li><a class="dropdown-item text-danger py-1" href="/api/auth/logout"><i class="bi bi-box-arrow-left ms-2"></i>{{ t.nav_logout }}</a></li>
+        </ul>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </nav>
