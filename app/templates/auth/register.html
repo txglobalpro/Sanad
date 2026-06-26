@@ -1,6 +1,47 @@
 {% extends "base.html" %}
 {% block title %}{{ t.register_title }} - Sanad{% endblock %}
+{% block head %}
+<style>
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  z-index: 9999;
+  min-width: 320px;
+  max-width: 90vw;
+  padding: 16px 20px;
+  border-radius: 12px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-size: 14px;
+  direction: ltr;
+}
+.toast-notification.show {
+  transform: translateX(-50%) translateY(0);
+}
+.toast-notification .toast-icon { font-size: 22px; flex-shrink: 0; }
+.toast-notification .toast-msg { flex: 1; line-height: 1.4; }
+.toast-notification .toast-close {
+  background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; padding: 0; opacity: 0.7; flex-shrink: 0;
+}
+.toast-notification .toast-close:hover { opacity: 1; }
+.toast-success { background: linear-gradient(135deg, #10b981, #059669); }
+.toast-error   { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.toast-info    { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+[dir="rtl"] .toast-notification { direction: rtl; }
+</style>
+{% endblock %}
 {% block content %}
+<div id="toastContainer" class="toast-notification d-none">
+  <span class="toast-icon"><i class="bi"></i></span>
+  <span class="toast-msg"></span>
+  <button class="toast-close" onclick="hideToast()">&times;</button>
+</div>
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
@@ -80,8 +121,6 @@
               <i class="bi bi-person-plus ms-1"></i>{{ t.register_btn }}
             </button>
           </form>
-          <div id="registerError" class="alert alert-danger mt-3 d-none"></div>
-          <div id="registerSuccess" class="alert alert-success mt-3 d-none"></div>
           <hr class="my-4">
           <p class="text-center mb-0">
             {{ t.register_have_account }}
@@ -95,6 +134,20 @@
 {% endblock %}
 {% block extra_js %}
 <script>
+function showToast(msg, type) {
+  const c = document.getElementById('toastContainer');
+  const icon = c.querySelector('.toast-icon i');
+  const text = c.querySelector('.toast-msg');
+  c.className = 'toast-notification d-none';
+  icon.className = 'bi bi-' + (type === 'success' ? 'check-circle-fill' : type === 'error' ? 'x-circle-fill' : 'info-circle-fill');
+  text.textContent = msg;
+  c.classList.remove('d-none');
+  requestAnimationFrame(() => { c.className = 'toast-notification toast-' + type + ' show'; });
+}
+function hideToast() {
+  const c = document.getElementById('toastContainer');
+  c.className = 'toast-notification d-none';
+}
 document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -118,24 +171,15 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data), signal: controller.signal });
     clearTimeout(tmr);
     const json = await res.json();
-    function showMsg(id, text) {
-      const el = document.getElementById(id);
-      if (el) { el.textContent = text; el.classList.remove('d-none'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-      alert(text);
-    }
     if (json.success) {
-      showMsg('registerSuccess', '{{ t.register_success }}');
+      showToast('{{ t.register_success }}', 'success');
       setTimeout(() => window.location.href = '/login', 2000);
     } else {
-      const msg = json.message || '{{ t.register_error_generic }}';
-      showMsg('registerError', msg);
+      showToast(json.message || '{{ t.register_error_generic }}', 'error');
     }
   } catch(e) {
     console.error('Register fetch error:', e);
-    let msg = e.name === 'AbortError' ? '{{ t.register_error_timeout }}' : '{{ t.register_error_connection }}';
-    const el = document.getElementById('registerError');
-    if (el) { el.textContent = msg; el.classList.remove('d-none'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    alert(msg);
+    showToast(e.name === 'AbortError' ? '{{ t.register_error_timeout }}' : '{{ t.register_error_connection }}', 'error');
   }
   finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-plus ms-1"></i>{{ t.register_btn }}'; }
 });
