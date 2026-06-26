@@ -124,13 +124,23 @@ async def register_page(request: Request):
 @app.post("/api/auth/register")
 async def register(data: UserRegister):
     try:
-        loop = asyncio.get_event_loop()
-        auth_result = await loop.run_in_executor(None, lambda: supabase_admin.auth.admin.create_user({
-            "email": data.email,
-            "password": data.password,
-            "email_confirm": True
-        }))
-        user_id = auth_result.user.id
+        async with httpx.AsyncClient(timeout=30) as client:
+            auth_resp = await client.post(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users",
+                headers={
+                    "apikey": SUPABASE_SERVICE_KEY,
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={"email": data.email, "password": data.password, "email_confirm": True}
+            )
+            if auth_resp.status_code >= 400:
+                err_body = auth_resp.text
+                if "already" in err_body.lower() or "duplicate" in err_body.lower():
+                    return JSONResponse({"success": False, "message": "البريد الإلكتروني مسجل مسبقاً"}, status_code=400)
+                return JSONResponse({"success": False, "message": err_body}, status_code=400)
+
+            user_id = auth_resp.json()["id"]
 
         profile_data = {
             "user_id": user_id, "email": data.email,
@@ -141,13 +151,15 @@ async def register(data: UserRegister):
 
         if data.role == "worker":
             profile_data["is_approved"] = False
-            await loop.run_in_executor(None, lambda: supabase_admin.table("workers").insert(profile_data).execute())
+            supabase_admin.table("workers").insert(profile_data).execute()
         else:
-            await loop.run_in_executor(None, lambda: supabase_admin.table("employers").insert(profile_data).execute())
+            supabase_admin.table("employers").insert(profile_data).execute()
 
-        await loop.run_in_executor(None, lambda: supabase_admin.table("wallets").insert({"user_id": user_id, "balance": 0}).execute())
+        supabase_admin.table("wallets").insert({"user_id": user_id, "balance": 0}).execute()
 
         return {"success": True, "message": "تم إنشاء الحساب بنجاح"}
+    except httpx.TimeoutException:
+        return JSONResponse({"success": False, "message": "خطأ في الاتصال بقاعدة البيانات، حاول مرة أخرى"}, status_code=502)
     except Exception as e:
         err_msg = str(e)
         if "already" in err_msg.lower() or "duplicate" in err_msg.lower():
