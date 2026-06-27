@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{{ t.nav_find_workers }} - Sanad{% endblock %}
+{% block content %}
+<section class="hero-section bg-primary text-white">
+  <div class="container text-center">
+    <h4 class="fw-bold mb-1">{{ t.fw_hero_title }}</h4>
+    <p class="mb-0 opacity-75">{{ t.fw_hero_subtitle }}</p>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label small fw-bold">{{ t.fw_skill_label }}</label>
+            <input type="text" id="skillInput" class="form-control" placeholder="{{ t.fw_skill_placeholder }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold">{{ t.register_city }}</label>
+            <select id="citySelect" class="form-select">
+              <option value="">{{ t.fw_all_cities }}</option>
+              {% for city in cities %}
+              <option value="{{ city }}">{{ city }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button id="searchBtn" class="btn btn-primary w-100">
+              <i class="bi bi-search ms-1"></i>{{ t.fw_search_btn }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultsContainer" class="row g-3">
+      <div class="col-12">
+        <div class="empty-state text-center">
+          <i class="bi bi-search"></i>
+          <h5>{{ t.fw_empty_title }}</h5>
+          <p>{{ t.fw_empty_desc }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+function renderWorkers(workers) {
+  const container = document.getElementById('resultsContainer');
+  if (!workers || workers.length === 0) {
+    container.innerHTML = '<div class="col-12"><div class="empty-state text-center"><i class="bi bi-search"></i><h5>{{ t.fw_empty_title }}</h5><p>{{ t.fw_empty_desc }}</p></div></div>';
+    return;
+  }
+  container.innerHTML = workers.map(w => `
+    <div class="col-md-4">
+      <div class="card border shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="rounded-circle overflow-hidden mx-auto mb-3 d-flex align-items-center justify-content-center" style="width:80px;height:80px;background:var(--primary-50);">
+            ${w.photo_url
+              ? '<img src="' + w.photo_url + '" alt="' + (w.first_name || '') + '" style="width:100%;height:100%;object-fit:cover;">'
+              : '<i class="bi bi-person-fill" style="font-size:2.5rem;color:var(--primary);"></i>'
+            }
+          </div>
+          <h6 class="fw-bold mb-1">${(w.first_name || '') + ' ' + (w.last_name || '')}</h6>
+          <p class="text-secondary small mb-2"><i class="bi bi-geo-alt ms-1"></i>${w.city || ''}</p>
+          ${w.skills && w.skills.length ? '<div class="d-flex flex-wrap gap-1 justify-content-center mb-2">' + w.skills.map(s => '<span class="badge bg-primary bg-opacity-10 text-primary">' + s + '</span>').join('') + '</div>' : ''}
+          ${w.hourly_rate ? '<span class="badge bg-success mb-2">' + w.hourly_rate + ' {{ t.fr_currency }}</span>' : ''}
+          <div class="mt-2">
+            <a href="/messages?worker_id=' + w.id + '" class="btn btn-primary btn-sm w-100"><i class="bi bi-chat-dots ms-1"></i>{{ t.fw_contact_btn }}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function searchWorkers() {
+  const skill = document.getElementById('skillInput').value.trim();
+  const city = document.getElementById('citySelect').value;
+  const params = new URLSearchParams();
+  if (skill) params.set('skill', skill);
+  if (city) params.set('city', city);
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>';
+  fetch('/api/workers/freelance?' + params.toString())
+    .then(r => r.json())
+    .then(data => {
+      renderWorkers(data.workers || data);
+    })
+    .catch(() => { alert('{{ t.error_connection }}'); })
+    .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="bi bi-search ms-1"></i>{{ t.fw_search_btn }}'; });
+}
+
+document.getElementById('searchBtn').addEventListener('click', searchWorkers);
+document.getElementById('skillInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') searchWorkers(); });
+
+// Load all on page load
+searchWorkers();
+</script>
+{% endblock %}

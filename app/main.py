@@ -545,10 +545,14 @@ ALTER TABLE workers ADD COLUMN IF NOT EXISTS skills JSONB DEFAULT '[]';
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS experience JSONB DEFAULT '[]';
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS education JSONB DEFAULT '[]';
 ALTER TABLE workers ADD COLUMN IF NOT EXISTS cv_url TEXT;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS available_for_freelance BOOLEAN DEFAULT FALSE;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS hourly_rate INTEGER DEFAULT 0;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS freelance_desc TEXT;
 ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_name TEXT;
 ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_logo TEXT;
 ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_description TEXT;
 ALTER TABLE employers ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS image_url TEXT;
 """
 
 async def execute_sql(query: str):
@@ -709,6 +713,52 @@ async def worker_stats(request: Request):
     pct = min(100, int(filled / len(fields) * 100))
     skills_count = len(w.get("skills", [])) if isinstance(w.get("skills"), (list, tuple)) else 0
     return {"applications": len(apps.data or []), "saved_jobs": len(saved.data or []), "completion": pct, "skills_count": skills_count}
+
+# ==================== Freelance Services ====================
+
+@app.get("/worker/freelance", response_class=HTMLResponse)
+async def worker_freelance_page(request: Request):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "worker": return RedirectResponse("/", status_code=302)
+    return render_template(request, "worker/freelance.html", user=user, worker=profile["data"])
+
+@app.post("/api/worker/freelance/save")
+async def save_freelance_settings(request: Request, available: bool = Form(False), hourly_rate: int = Form(0), freelance_desc: str = Form("")):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    try:
+        supabase_admin.table("workers").update({
+            "available_for_freelance": available, "hourly_rate": hourly_rate,
+            "freelance_desc": freelance_desc
+        }).eq("user_id", user["sub"]).execute()
+        return {"success": True, "message": "تم حفظ الإعدادات"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.get("/api/workers/freelance")
+async def get_freelance_workers(skill: str = "", city: str = ""):
+    try:
+        query = supabase.table("workers").select("*").eq("is_approved", True).eq("available_for_freelance", True)
+        if city:
+            query = query.eq("city", city)
+        result = query.order("created_at", desc=True).execute()
+        workers = result.data or []
+        if skill:
+            sl = skill.lower()
+            workers = [w for w in workers if sl in str(w.get("skills", [])).lower()]
+        return {"data": workers}
+    except Exception as e:
+        return JSONResponse({"data": [], "error": str(e)})
+
+@app.get("/employer/find-workers", response_class=HTMLResponse)
+async def find_workers_page(request: Request):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
+    return render_template(request, "employer/find_workers.html", user=user, employer=profile["data"], cities=CITIES)
 
 # ==================== Employer Profile Routes ====================
 

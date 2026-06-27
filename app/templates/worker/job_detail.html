@@ -95,6 +95,12 @@
           <button class="btn btn-primary px-4" onclick="applyJob('{{ job.id }}')" id="applyBtn">
             <i class="bi bi-send ms-1"></i>{{ t.wjd_apply_btn }}
           </button>
+          <a class="btn px-3" style="background:#25D366;color:#fff;" onclick="window.open('https://wa.me/?text=' + encodeURIComponent('{{ job.title }} - ' + window.location.href), '_blank', 'noopener');" title="{{ t.wjd_share }}">
+            <i class="bi bi-whatsapp"></i>
+          </a>
+          <a class="btn px-3" style="background:#1877F2;color:#fff;" onclick="window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location.href), '_blank', 'noopener');" title="{{ t.wjd_share }}">
+            <i class="bi bi-facebook"></i>
+          </a>
         </div>
         <div id="applyMsg" class="mt-2"></div>
       </div>
