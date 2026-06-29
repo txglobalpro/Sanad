@@ -58,6 +58,8 @@
           {% elif user.role == 'employer' %}
           <li class="nav-item d-lg-none"><a class="nav-link" href="/employer/find-workers"><i class="bi bi-search ms-1"></i>{{ t.nav_find_workers }}</a></li>
           {% endif %}
+          <li class="nav-item d-lg-none"><div class="nav-link small text-secondary"><i class="bi bi-wallet2 ms-1"></i>{{ t.wallet_balance }}: <strong dir="ltr" class="text-primary">{{ wallet.balance if wallet else 0 }}</strong> ل.س</div></li>
+          <li class="nav-item d-lg-none"><a class="nav-link" href="/deposit"><i class="bi bi-credit-card ms-1"></i>{{ t.nav_deposit }}</a></li>
           <li class="nav-item d-lg-none"><a class="nav-link" href="/notifications"><i class="bi bi-bell ms-1"></i>{{ t.nav_notifications }}</a></li>
           <li class="nav-item d-lg-none"><a class="nav-link" href="/messages"><i class="bi bi-chat-dots ms-1"></i>{{ t.nav_messages }}</a></li>
           <li class="nav-item d-lg-none"><a class="nav-link" href="/about">{{ t.nav_about }}</a></li>
@@ -97,6 +99,7 @@
         {% elif user.role == 'employer' %}
           <a class="dropdown-item" href="/employer/find-workers"><i class="bi bi-search ms-2"></i>{{ t.nav_find_workers }}</a>
         {% endif %}
+        <a class="dropdown-item" href="/deposit"><i class="bi bi-credit-card ms-2"></i>{{ t.nav_deposit }}</a>
         <a class="dropdown-item" href="/notifications"><i class="bi bi-bell ms-2"></i>{{ t.nav_notifications }}</a>
         <a class="dropdown-item" href="/messages"><i class="bi bi-chat-dots ms-2"></i>{{ t.nav_messages }}</a>
         <a class="dropdown-item" href="/about">{{ t.nav_about }}</a>

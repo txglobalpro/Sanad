@@ -553,6 +553,14 @@ ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_logo TEXT;
 ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_description TEXT;
 ALTER TABLE employers ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS image_url TEXT;
+CREATE TABLE IF NOT EXISTS payment_methods (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  currency TEXT NOT NULL,
+  network TEXT NOT NULL,
+  wallet_address TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 """
 
 async def execute_sql(query: str):
@@ -958,6 +966,92 @@ async def delete_employer(request: Request, employer_id: str):
     except Exception as e:
         return JSONResponse({"success": False, "message": str(e)}, status_code=400)
 
+# ==================== Admin Client Management ====================
+
+@app.get("/api/admin/clients")
+async def admin_clients(request: Request):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
+    workers = supabase.table("workers").select("*").order("created_at", desc=True).execute()
+    employers = supabase.table("employers").select("*").order("created_at", desc=True).execute()
+    all_clients = []
+    for w in workers.data or []:
+        wb = supabase_admin.table("wallets").select("balance").eq("user_id", w["user_id"]).execute()
+        all_clients.append({
+            "id": w["id"], "user_id": w["user_id"],
+            "email": w.get("email", ""), "name": f"{w.get('first_name','')} {w.get('last_name','')}".strip(),
+            "type": "worker", "is_approved": w.get("is_approved", False),
+            "phone": w.get("phone", ""), "city": w.get("city", ""),
+            "created_at": w.get("created_at", ""),
+            "wallet_balance": wb.data[0]["balance"] if wb.data else 0,
+            "has_id_front": bool(w.get("id_image_front")), "has_id_back": bool(w.get("id_image_back")),
+            "id_image_front": w.get("id_image_front",""), "id_image_back": w.get("id_image_back",""),
+            "profile": {"gender": w.get("gender",""), "nationality": w.get("nationality",""), "bio": w.get("bio",""), "age": w.get("age","")}
+        })
+    for e in employers.data or []:
+        eb = supabase_admin.table("wallets").select("balance").eq("user_id", e["user_id"]).execute()
+        all_clients.append({
+            "id": e["id"], "user_id": e["user_id"],
+            "email": e.get("email", ""), "name": e.get("company_name", "") or f"{e.get('first_name','')} {e.get('last_name','')}".strip(),
+            "type": "employer", "is_verified": e.get("is_verified", False),
+            "phone": e.get("phone", ""), "city": e.get("city", ""),
+            "created_at": e.get("created_at", ""),
+            "wallet_balance": eb.data[0]["balance"] if eb.data else 0
+        })
+    return {"data": all_clients}
+
+@app.post("/api/admin/delete-client/{user_id}")
+async def admin_delete_client(request: Request, user_id: str):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
+    try:
+        supabase_admin.table("workers").delete().eq("user_id", user_id).execute()
+        supabase_admin.table("employers").delete().eq("user_id", user_id).execute()
+        supabase_admin.table("wallets").delete().eq("user_id", user_id).execute()
+        supabase_admin.table("notifications").delete().eq("user_id", user_id).execute()
+        supabase_admin.table("messages").delete().or_(f"sender_id.eq.{user_id},receiver_id.eq.{user_id}").execute()
+        async with httpx.AsyncClient(timeout=15) as client:
+            await client.delete(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users/{user_id}",
+                headers={"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"}
+            )
+        return {"success": True, "message": "تم حذف الحساب"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+# ==================== Payment Methods ====================
+
+@app.get("/api/admin/payment-methods")
+async def get_payment_methods(request: Request):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
+    result = supabase_admin.table("payment_methods").select("*").order("created_at", desc=True).execute()
+    return {"data": result.data or []}
+
+@app.post("/api/admin/payment-methods")
+async def add_payment_method(request: Request, currency: str = Form(...), network: str = Form(...), wallet_address: str = Form(...)):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
+    try:
+        supabase_admin.table("payment_methods").insert({
+            "currency": currency, "network": network, "wallet_address": wallet_address
+        }).execute()
+        return {"success": True}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
+@app.post("/api/admin/payment-methods/{pm_id}/delete")
+async def delete_payment_method(request: Request, pm_id: str):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
+    supabase_admin.table("payment_methods").delete().eq("id", pm_id).execute()
+    return {"success": True}
+
+@app.get("/api/payment-methods")
+async def get_payment_methods_public():
+    result = supabase_admin.table("payment_methods").select("*").eq("is_active", True).execute()
+    return {"data": result.data or []}
+
 # ==================== Employer Stats API ====================
 
 @app.get("/api/employer/stats")
@@ -983,6 +1077,14 @@ async def set_lang(lang: str):
     if lang in ("ar", "en"):
         response.set_cookie(key="lang", value=lang, max_age=365*24*3600, path="/")
     return response
+
+@app.get("/deposit", response_class=HTMLResponse)
+async def deposit_page(request: Request):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    methods = supabase_admin.table("payment_methods").select("*").eq("is_active", True).execute()
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "deposit.html", user=user, wallet=wallet, payment_methods=methods.data or [])
 
 if __name__ == "__main__":
     import uvicorn

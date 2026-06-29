@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ t.deposit_title }} - Sanad{% endblock %}
+{% block meta_desc %}{{ t.deposit_title }} - Sanad{% endblock %}
+{% block content %}
+<section class="hero-section bg-dark text-white">
+  <div class="container">
+    <h4 class="fw-bold mb-1"><i class="bi bi-credit-card ms-2"></i>{{ t.deposit_title }}</h4>
+    <p class="mb-0 opacity-75">{{ t.deposit_confirm }}</p>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    <div class="row g-4">
+      {% if payment_methods %}
+      <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white fw-bold">{{ t.deposit_select }}</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">{{ t.pm_currency }}</label>
+              <select class="form-select" id="depositCurrency" onchange="updateDepositDetails()">
+                <option value="">{{ t.deposit_select }}</option>
+                {% for pm in payment_methods %}
+                <option value="{{ pm.id }}" data-network="{{ pm.network }}" data-address="{{ pm.wallet_address }}">{{ pm.currency }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t.pm_network }}</label>
+              <input type="text" class="form-control" id="depositNetwork" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t.pm_address }}</label>
+              <div class="input-group">
+                <textarea class="form-control font-monospace" id="depositAddress" rows="2" readonly></textarea>
+                <button class="btn btn-outline-secondary" onclick="copyAddress()" id="copyBtn"><i class="bi bi-clipboard"></i></button>
+              </div>
+            </div>
+            <div class="alert alert-warning d-flex align-items-center gap-2">
+              <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+              <div>{{ t.deposit_warning }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-3">
+          <div class="card-header bg-white fw-bold"><i class="bi bi-wallet2 ms-2 text-primary"></i>{{ t.wallet_balance }}</div>
+          <div class="card-body text-center">
+            <h2 class="fw-bold text-primary mb-0" dir="ltr">{{ wallet.balance if wallet else 0 }} ل.س</h2>
+            <small class="text-muted">{{ t.wallet_desc }}</small>
+          </div>
+        </div>
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white fw-bold"><i class="bi bi-info-circle ms-2 text-info"></i>{{ t.pm_deposit_info_title }}</div>
+          <div class="card-body">
+            <ol class="mb-0 small lh-lg">
+              {{ t.deposit_instructions | safe }}
+            </ol>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-body text-center py-5">
+            <i class="bi bi-credit-card-2-front text-muted" style="font-size:3rem"></i>
+            <h5 class="mt-3 text-muted">{{ t.pm_no_methods }}</h5>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+function updateDepositDetails() {
+  const sel = document.getElementById('depositCurrency');
+  const opt = sel.options[sel.selectedIndex];
+  document.getElementById('depositNetwork').value = opt ? opt.dataset.network : '';
+  document.getElementById('depositAddress').value = opt ? opt.dataset.address : '';
+}
+function copyAddress() {
+  const ta = document.getElementById('depositAddress');
+  if (!ta.value) return;
+  navigator.clipboard.writeText(ta.value).then(function() {
+    const btn = document.getElementById('copyBtn');
+    btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+    setTimeout(function(){ btn.innerHTML = '<i class="bi bi-clipboard"></i>'; }, 2000);
+  });
+}
+</script>
+{% endblock %}
