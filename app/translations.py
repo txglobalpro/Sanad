@@ -491,6 +491,15 @@ AR = {
     "ad_confirm_verify": "تأكيد توثيق صاحب العمل هذا؟",
     "ad_confirm_delete_employer": "حذف صاحب العمل هذا وجميع فرصه؟",
 
+    # Admin Dashboard Compact
+    "ad_section_pending": "الطلبات المعلقة",
+    "ad_section_clients": "جميع العملاء",
+    "ad_section_jobs": "فرص العمل",
+    "ad_section_payment": "طرق الدفع",
+    "ad_manage": "إدارة",
+    "ad_back": "العودة إلى لوحة التحكم",
+    "ad_pending_title": "طلبات الموافقة على العمال",
+
     # Admin Client Management
     "ac_title": "إدارة العملاء",
     "ac_email": "البريد الإلكتروني",
@@ -1026,6 +1035,15 @@ EN = {
     "ad_delete_employer": "Delete",
     "ad_confirm_verify": "Confirm verification of this employer?",
     "ad_confirm_delete_employer": "Delete this employer and all their jobs?",
+
+    # Admin Dashboard Compact
+    "ad_section_pending": "Pending Approvals",
+    "ad_section_clients": "All Clients",
+    "ad_section_jobs": "Job Posts",
+    "ad_section_payment": "Payment Methods",
+    "ad_manage": "Manage",
+    "ad_back": "Back to Dashboard",
+    "ad_pending_title": "Worker Approval Requests",
 
     # Admin Client Management
     "ac_title": "Client Management",

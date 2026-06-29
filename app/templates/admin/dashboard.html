@@ -11,430 +11,87 @@
 
 <section class="section-padding">
   <div class="container">
-    <div class="row g-4">
-
+    <div class="row g-3">
       <!-- Stats Row -->
-      <div class="col-12">
-        <div class="row g-3">
-          <div class="col-md-3 col-6">
-            <div class="card shadow-sm border-0 text-center p-3">
-              <h3 class="fw-bold text-primary mb-1">{{ total_workers }}</h3>
-              <small class="text-muted">{{ t.ad_total_workers }}</small>
-            </div>
-          </div>
-          <div class="col-md-3 col-6">
-            <div class="card shadow-sm border-0 text-center p-3">
-              <h3 class="fw-bold text-success mb-1">{{ total_employers }}</h3>
-              <small class="text-muted">{{ t.ad_total_employers }}</small>
-            </div>
-          </div>
-          <div class="col-md-3 col-6">
-            <div class="card shadow-sm border-0 text-center p-3">
-              <h3 class="fw-bold text-warning mb-1">{{ total_jobs }}</h3>
-              <small class="text-muted">{{ t.ad_total_jobs }}</small>
-            </div>
-          </div>
-          <div class="col-md-3 col-6">
-            <div class="card shadow-sm border-0 text-center p-3">
-              <h3 class="fw-bold text-info mb-1">{{ total_applications }}</h3>
-              <small class="text-muted">{{ t.ad_total_apps }}</small>
-            </div>
-          </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm border-0 text-center p-3">
+          <h3 class="fw-bold text-primary mb-0">{{ total_workers }}</h3>
+          <small class="text-muted">{{ t.ad_total_workers }}</small>
         </div>
       </div>
-
-      <!-- Pending Workers -->
-      <div class="col-12">
-        <div class="card shadow-sm border-0">
-          <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-person-check text-primary ms-2"></i>{{ t.ad_pending_header }}</span>
-            <span class="badge bg-primary">{{ workers|selectattr('is_approved', 'equalto', false)|list|length }}</span>
-          </div>
-          <div class="card-body">
-            {% set pending = workers|selectattr('is_approved', 'equalto', false)|list %}
-            {% if pending %}
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>{{ t.ad_th_name }}</th>
-                    <th>{{ t.ad_th_city }}</th>
-                    <th>{{ t.ad_th_phone }}</th>
-                    <th>{{ t.ad_th_id }}</th>
-                    <th>{{ t.ad_th_action }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for w in pending %}
-                  <tr>
-                    <td class="fw-medium">{{ w.first_name or '' }} {{ w.last_name or '' }}</td>
-                    <td>{{ w.city or t.not_specified }}</td>
-                    <td dir="ltr" style="text-align:right">{{ w.phone or '' }}</td>
-                    <td>
-                      {% if w.id_image_front %}
-                        <a href="{{ w.id_image_front }}" target="_blank" class="btn btn-sm btn-outline-info">
-                          <i class="bi bi-eye ms-1"></i>{{ t.ad_view }}
-                        </a>
-                      {% else %}
-                        <span class="text-danger">{{ t.ad_no_id }}</span>
-                      {% endif %}
-                    </td>
-                    <td>
-                      <button class="btn btn-sm btn-success" onclick="approveWorker('{{ w.id }}')">
-                        <i class="bi bi-check-lg ms-1"></i>{{ t.ad_approve }}
-                      </button>
-                      <button class="btn btn-sm btn-danger" onclick="rejectWorker('{{ w.id }}')">
-                        <i class="bi bi-x-lg ms-1"></i>{{ t.ad_reject }}
-                      </button>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            {% else %}
-            <div class="empty-state text-center">
-              <i class="bi bi-check-circle text-success"></i>
-              <h5>{{ t.ad_pending_empty_title }}</h5>
-              <p class="text-secondary">{{ t.ad_pending_empty_desc }}</p>
-            </div>
-            {% endif %}
-          </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm border-0 text-center p-3">
+          <h3 class="fw-bold text-success mb-0">{{ total_employers }}</h3>
+          <small class="text-muted">{{ t.ad_total_employers }}</small>
         </div>
       </div>
-
-      <!-- Client Management -->
-      <div class="col-12">
-        <div class="card shadow-sm border-0">
-          <div class="card-header bg-white fw-bold"><i class="bi bi-people-fill text-primary ms-2"></i>{{ t.ac_title }}</div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover" id="clientsTable">
-                <thead>
-                  <tr>
-                    <th>{{ t.ac_email }}</th>
-                    <th>{{ t.ac_name }}</th>
-                    <th>{{ t.ac_type }}</th>
-                    <th>{{ t.ac_kyc }}</th>
-                    <th>{{ t.ac_wallet }}</th>
-                    <th>{{ t.ad_th_action }}</th>
-                  </tr>
-                </thead>
-                <tbody id="clientsBody">
-                  <tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-arrow-clockwise spin me-2"></i>{{ t.loading_text }}</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm border-0 text-center p-3">
+          <h3 class="fw-bold text-warning mb-0">{{ total_jobs }}</h3>
+          <small class="text-muted">{{ t.ad_total_jobs }}</small>
         </div>
       </div>
-
-      <!-- KYC Modal -->
-      <div class="modal fade" id="kycModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">{{ t.ac_kyc }} - <span id="kycName"></span></h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div id="kycContent" class="text-center text-muted py-4">{{ t.loading_text }}</div>
-            </div>
-          </div>
+      <div class="col-6 col-md-3">
+        <div class="card shadow-sm border-0 text-center p-3">
+          <h3 class="fw-bold text-info mb-0">{{ total_applications }}</h3>
+          <small class="text-muted">{{ t.ad_total_apps }}</small>
         </div>
       </div>
+    </div>
 
-      <!-- All Jobs -->
-      <div class="col-12">
-        <div class="card shadow-sm border-0">
-          <div class="card-header bg-white fw-bold"><i class="bi bi-briefcase text-primary ms-2"></i>{{ t.ad_all_jobs_header }}</div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th>{{ t.ad_th_name }}</th>
-                    <th>{{ t.ed_th_city }}</th>
-                    <th>{{ t.ed_th_pay }}</th>
-                    <th>{{ t.ed_th_status }}</th>
-                    <th>{{ t.ad_th_action }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for j in jobs %}
-                  <tr>
-                    <td class="fw-medium">{{ j.title }}</td>
-                    <td>{{ j.city }}</td>
-                    <td>{{ j.pay }} ل.س</td>
-                    <td>
-                      {% if j.status == 'open' %}
-                        <span class="badge bg-success">{{ t.ed_status_open }}</span>
-                      {% else %}
-                        <span class="badge bg-secondary">{{ t.ed_status_closed }}</span>
-                      {% endif %}
-                    </td>
-                    <td>
-                      {% if j.status == 'open' %}
-                        <button class="btn btn-sm btn-outline-danger" onclick="closeJob('{{ j.id }}')">
-                          <i class="bi bi-x-circle ms-1"></i>{{ t.ad_close }}
-                        </button>
-                      {% endif %}
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+    <div class="row g-3 mt-2">
+      <!-- Pending Workers Card -->
+      <div class="col-md-3 col-6">
+        <a href="/admin/workers-pending" class="text-decoration-none">
+          <div class="card shadow-sm border-0 text-center p-3 h-100" style="cursor:pointer;transition:.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <i class="bi bi-person-check fs-3 text-primary"></i>
+              <span class="badge bg-primary fs-6">{{ workers|selectattr('is_approved', 'equalto', false)|list|length }}</span>
             </div>
+            <h6 class="fw-bold mb-0">{{ t.ad_section_pending }}</h6>
+            <small class="text-muted">{{ t.ad_manage }} <i class="bi bi-arrow-{{ 'left' if lang=='ar' else 'right' }}"></i></small>
           </div>
-        </div>
+        </a>
       </div>
-
-      <!-- Payment Methods -->
-      <div class="col-12">
-        <div class="card shadow-sm border-0">
-          <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <span><i class="bi bi-credit-card-2-front text-primary ms-2"></i>{{ t.pm_title }}</span>
-            <button class="btn btn-sm btn-primary" onclick="showAddPaymentMethod()">
-              <i class="bi bi-plus-lg ms-1"></i>{{ t.pm_add }}
-            </button>
-          </div>
-          <div class="card-body">
-            <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
-              <i class="bi bi-info-circle flex-shrink-0"></i>
-              <div><strong>{{ t.pm_deposit_info_title }}:</strong> {{ t.pm_deposit_info }}<br><small class="opacity-75">{{ t.pm_deposit_tip }}</small></div>
+      <!-- Clients Card -->
+      <div class="col-md-3 col-6">
+        <a href="/admin/clients" class="text-decoration-none">
+          <div class="card shadow-sm border-0 text-center p-3 h-100" style="cursor:pointer;transition:.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <i class="bi bi-people-fill fs-3 text-success"></i>
+              <span class="badge bg-success fs-6">{{ total_workers + total_employers }}</span>
             </div>
-            <div class="table-responsive">
-              <table class="table table-hover" id="paymentMethodsTable">
-                <thead>
-                  <tr>
-                    <th>{{ t.pm_currency }}</th>
-                    <th>{{ t.pm_network }}</th>
-                    <th>{{ t.pm_address }}</th>
-                    <th>{{ t.ad_th_action }}</th>
-                  </tr>
-                </thead>
-                <tbody id="paymentMethodsBody">
-                  <tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-arrow-clockwise spin me-2"></i>{{ t.loading_text }}</td></tr>
-                </tbody>
-              </table>
-            </div>
+            <h6 class="fw-bold mb-0">{{ t.ad_section_clients }}</h6>
+            <small class="text-muted">{{ t.ad_manage }} <i class="bi bi-arrow-{{ 'left' if lang=='ar' else 'right' }}"></i></small>
           </div>
-        </div>
+        </a>
       </div>
-
-      <!-- Add Payment Method Modal -->
-      <div class="modal fade" id="paymentModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">{{ t.pm_add }} {{ t.pm_title }}</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <!-- Jobs Card -->
+      <div class="col-md-3 col-6">
+        <a href="/admin/jobs" class="text-decoration-none">
+          <div class="card shadow-sm border-0 text-center p-3 h-100" style="cursor:pointer;transition:.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <i class="bi bi-briefcase fs-3 text-warning"></i>
+              <span class="badge bg-warning text-dark fs-6">{{ total_jobs }}</span>
             </div>
-            <form id="paymentForm" onsubmit="savePaymentMethod(event)">
-              <div class="modal-body">
-                <div class="mb-3">
-                  <label class="form-label">{{ t.pm_currency }}</label>
-                  <select class="form-select" id="pmCurrency" required onchange="updateNetworkHint()">
-                    <option value="">{{ t.pm_select_currency }}</option>
-                    <option value="BTC">Bitcoin (BTC)</option>
-                    <option value="ETH">Ethereum (ETH)</option>
-                    <option value="USDT">Tether (USDT)</option>
-                    <option value="USDC">USD Coin (USDC)</option>
-                    <option value="BNB">Binance Coin (BNB)</option>
-                    <option value="TRX">Tron (TRX)</option>
-                    <option value="SOL">Solana (SOL)</option>
-                    <option value="XRP">XRP</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">{{ t.pm_network }}</label>
-                  <input type="text" class="form-control" id="pmNetwork" required readonly placeholder="{{ t.pm_network_hint }}">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">{{ t.pm_address }}</label>
-                  <textarea class="form-control font-monospace" id="pmAddress" rows="2" required placeholder="{{ t.pm_address_placeholder }}"></textarea>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t.cancel_button }}</button>
-                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg ms-1"></i>{{ t.pm_add }}</button>
-              </div>
-            </form>
+            <h6 class="fw-bold mb-0">{{ t.ad_section_jobs }}</h6>
+            <small class="text-muted">{{ t.ad_manage }} <i class="bi bi-arrow-{{ 'left' if lang=='ar' else 'right' }}"></i></small>
           </div>
-        </div>
+        </a>
       </div>
-
+      <!-- Payment Methods Card -->
+      <div class="col-md-3 col-6">
+        <a href="/admin/payment-methods" class="text-decoration-none">
+          <div class="card shadow-sm border-0 text-center p-3 h-100" style="cursor:pointer;transition:.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <i class="bi bi-credit-card-2-front fs-3 text-info"></i>
+            </div>
+            <h6 class="fw-bold mb-0">{{ t.ad_section_payment }}</h6>
+            <small class="text-muted">{{ t.ad_manage }} <i class="bi bi-arrow-{{ 'left' if lang=='ar' else 'right' }}"></i></small>
+          </div>
+        </a>
+      </div>
     </div>
   </div>
 </section>
-{% endblock %}
-{% block extra_js %}
-<script>
-const NETWORK_MAP = {
-  'BTC': ['Bitcoin', 'Lightning'],
-  'ETH': ['Ethereum (ERC20)'],
-  'USDT': ['Ethereum (ERC20)', 'Tron (TRC20)', 'BNB Smart Chain (BEP20)', 'Solana'],
-  'USDC': ['Ethereum (ERC20)', 'BNB Smart Chain (BEP20)', 'Solana'],
-  'BNB': ['BNB Smart Chain (BEP20)', 'BNB Beacon Chain (BEP2)'],
-  'TRX': ['Tron (TRC20)'],
-  'SOL': ['Solana'],
-  'XRP': ['XRP Ledger']
-};
-function updateNetworkHint() {
-  const cur = document.getElementById('pmCurrency').value;
-  const inp = document.getElementById('pmNetwork');
-  if (NETWORK_MAP[cur]) {
-    inp.value = NETWORK_MAP[cur].join(' / ') + '. {{ t.pm_network_hint }}';
-  } else {
-    inp.value = '';
-  }
-}
-async function loadClients() {
-  try {
-    const r = await fetch('/api/admin/clients');
-    const d = await r.json();
-    const tbody = document.getElementById('clientsBody');
-    if (!d.data || d.data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">{{ t.ac_no_clients }}</td></tr>';
-      return;
-    }
-    tbody.innerHTML = d.data.map(c => `<tr>
-      <td>${esc(c.email)}</td>
-      <td class="fw-medium">${esc(c.name)}</td>
-      <td><span class="badge ${c.type==='worker'?'bg-info':'bg-secondary'}">${c.type==='worker'?'{{ t.worker_type }}':'{{ t.employer_type }}'}</span></td>
-      <td>${c.has_id_front||c.has_id_back?`<button class="btn btn-sm btn-outline-info" onclick="showKyc('${c.user_id}')"><i class="bi bi-eye ms-1"></i>{{ t.ac_kyc_btn }}</button>`:`<span class="text-muted">—</span>`}</td>
-      <td dir="ltr">${c.wallet_balance.toLocaleString()}</td>
-      <td>
-        ${c.type==='worker'&&!c.is_approved?`<button class="btn btn-sm btn-success" onclick="approveWorkerFromClient('${c.id}')"><i class="bi bi-check-lg ms-1"></i>{{ t.ac_approve }}</button>`:''}
-        <button class="btn btn-sm btn-danger" onclick="deleteClient('${c.user_id}','${esc(c.name)}')"><i class="bi bi-trash ms-1"></i>{{ t.ac_reject }}</button>
-      </td>
-    </tr>`).join('');
-  } catch(e) {
-    document.getElementById('clientsBody').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">{{ t.error_occurred }}</td></tr>';
-  }
-}
-async function showKyc(userId) {
-  document.getElementById('kycName').textContent = '{{ t.loading_text }}';
-  document.getElementById('kycContent').innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>{{ t.loading_text }}';
-  const modal = new bootstrap.Modal(document.getElementById('kycModal'));
-  modal.show();
-  try {
-    const r = await fetch('/api/admin/clients');
-    const d = await r.json();
-    const c = (d.data||[]).find(x => x.user_id === userId);
-    if (!c) {
-      document.getElementById('kycContent').innerHTML = '<div class="text-danger">{{ t.error_occurred }}</div>';
-      return;
-    }
-    document.getElementById('kycName').textContent = esc(c.name)+' ('+esc(c.email)+')';
-    let html = '<div class="text-start">';
-    if (c.type === 'worker' && c.profile) {
-      html += `<p><strong>Gender:</strong> ${c.profile.gender||'—'}</p>`;
-      html += `<p><strong>Nationality:</strong> ${c.profile.nationality||'—'}</p>`;
-      html += `<p><strong>Bio:</strong> ${c.profile.bio||'—'}</p>`;
-    }
-    html += `<p><strong>Phone:</strong> ${c.phone||'—'}</p>`;
-    html += `<p><strong>City:</strong> ${c.city||'—'}</p>`;
-    html += `<p><strong>Wallet:</strong> ${c.wallet_balance.toLocaleString()}</p>`;
-    if (c.has_id_front) {
-      html += '<h6 class="mt-3">ID Front:</h6><img src="'+esc(c.id_image_front)+'" class="img-fluid rounded border" style="max-height:300px" onerror="this.parentElement.innerHTML=\'<div class=text-danger>Image not available</div>\'">';
-    }
-    if (c.has_id_back) {
-      html += '<h6 class="mt-3">ID Back:</h6><img src="'+esc(c.id_image_back)+'" class="img-fluid rounded border" style="max-height:300px" onerror="this.parentElement.innerHTML=\'<div class=text-danger>Image not available</div>\'">';
-    }
-    html += '</div>';
-    document.getElementById('kycContent').innerHTML = html;
-  } catch(e) {
-    document.getElementById('kycContent').innerHTML = '<div class="text-danger">{{ t.error_occurred }}</div>';
-  }
-}
-async function approveWorkerFromClient(id) {
-  if (!confirm('{{ t.ad_confirm_approve }}')) return;
-  await fetch('/api/admin/approve-worker/'+id, { method:'POST' });
-  loadClients();
-}
-async function deleteClient(userId, name) {
-  if (!confirm('{{ t.ac_reject_confirm }}\n\n'+name)) return;
-  const r = await fetch('/api/admin/delete-client/'+userId, { method:'POST' });
-  const d = await r.json();
-  if (d.success) { loadClients(); } else { alert(d.message); }
-}
-async function loadPaymentMethods() {
-  try {
-    const r = await fetch('/api/admin/payment-methods');
-    const d = await r.json();
-    const tbody = document.getElementById('paymentMethodsBody');
-    if (!d.data || d.data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">{{ t.pm_no_methods }}</td></tr>';
-      return;
-    }
-    tbody.innerHTML = d.data.map(p => `<tr>
-      <td class="fw-bold">${esc(p.currency)}</td>
-      <td>${esc(p.network)}</td>
-      <td class="font-monospace" style="word-break:break-all;max-width:300px">${esc(p.wallet_address)}</td>
-      <td><button class="btn btn-sm btn-danger" onclick="deletePaymentMethod('${p.id}')"><i class="bi bi-trash ms-1"></i>{{ t.pm_delete }}</button></td>
-    </tr>`).join('');
-  } catch(e) {
-    document.getElementById('paymentMethodsBody').innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">{{ t.error_occurred }}</td></tr>';
-  }
-}
-function showAddPaymentMethod() {
-  document.getElementById('paymentForm').reset();
-  document.getElementById('pmNetwork').value = '';
-  new bootstrap.Modal(document.getElementById('paymentModal')).show();
-}
-async function savePaymentMethod(e) {
-  e.preventDefault();
-  const fd = new FormData();
-  fd.append('currency', document.getElementById('pmCurrency').value);
-  fd.append('network', document.getElementById('pmNetwork').value);
-  fd.append('wallet_address', document.getElementById('pmAddress').value);
-  const r = await fetch('/api/admin/payment-methods', { method:'POST', body:fd });
-  const d = await r.json();
-  if (d.success) {
-    bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-    loadPaymentMethods();
-  } else {
-    alert(d.message);
-  }
-}
-async function deletePaymentMethod(id) {
-  if (!confirm('{{ t.pm_delete_confirm }}')) return;
-  await fetch('/api/admin/payment-methods/'+id+'/delete', { method:'POST' });
-  loadPaymentMethods();
-}
-function esc(s) { return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]}); }
-async function approveWorker(id) {
-  if (!confirm('{{ t.ad_confirm_approve }}')) return;
-  await fetch('/api/admin/approve-worker/'+id, { method:'POST' });
-  location.reload();
-}
-async function rejectWorker(id) {
-  if (!confirm('{{ t.ad_confirm_reject }}')) return;
-  await fetch('/api/admin/reject-worker/'+id, { method:'POST' });
-  location.reload();
-}
-async function closeJob(id) {
-  if (!confirm('{{ t.ad_confirm_close }}')) return;
-  await fetch('/api/admin/close-job/'+id, { method:'POST' });
-  location.reload();
-}
-async function verifyEmployer(id) {
-  if (!confirm('{{ t.ad_confirm_verify }}')) return;
-  await fetch('/api/admin/verify-employer/'+id, { method:'POST' });
-  location.reload();
-}
-async function unverifyEmployer(id) {
-  if (!confirm('{{ t.ad_confirm_verify }}')) return;
-  await fetch('/api/admin/unverify-employer/'+id, { method:'POST' });
-  location.reload();
-}
-async function deleteEmployer(id) {
-  if (!confirm('{{ t.ad_confirm_delete_employer }}')) return;
-  await fetch('/api/admin/delete-employer/'+id, { method:'POST' });
-  location.reload();
-}
-loadClients();
-loadPaymentMethods();
-</script>
 {% endblock %}

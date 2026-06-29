@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}{{ t.ac_title }} - Sanad{% endblock %}
+{% block meta_desc %}{{ t.ac_title }} - Sanad{% endblock %}
+{% block content %}
+<section class="hero-section bg-dark text-white">
+  <div class="container">
+    <h4 class="fw-bold mb-1">{{ t.ac_title }}</h4>
+    <p class="mb-0 opacity-75"><a href="/admin/dashboard" class="text-white-50 text-decoration-none">{{ t.ad_back }}</a></p>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{{ t.ac_email }}</th>
+                <th>{{ t.ac_name }}</th>
+                <th>{{ t.ac_type }}</th>
+                <th>{{ t.ac_kyc }}</th>
+                <th>{{ t.ac_wallet }}</th>
+                <th>{{ t.ad_th_action }}</th>
+              </tr>
+            </thead>
+            <tbody id="clientsBody">
+              <tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-arrow-clockwise spin me-2"></i>{{ t.loading_text }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="modal fade" id="kycModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ t.ac_kyc }} - <span id="kycName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="kycContent" class="text-center text-muted py-4">{{ t.loading_text }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const NETWORK_MAP = {
+  'BTC': ['Bitcoin', 'Lightning'],
+  'ETH': ['Ethereum (ERC20)'],
+  'USDT': ['Ethereum (ERC20)', 'Tron (TRC20)', 'BNB Smart Chain (BEP20)', 'Solana'],
+  'USDC': ['Ethereum (ERC20)', 'BNB Smart Chain (BEP20)', 'Solana'],
+  'BNB': ['BNB Smart Chain (BEP20)', 'BNB Beacon Chain (BEP2)'],
+  'TRX': ['Tron (TRC20)'],
+  'SOL': ['Solana'],
+  'XRP': ['XRP Ledger']
+};
+async function loadClients() {
+  try {
+    const r = await fetch('/api/admin/clients');
+    const d = await r.json();
+    const tbody = document.getElementById('clientsBody');
+    if (!d.data || d.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">{{ t.ac_no_clients }}</td></tr>';
+      return;
+    }
+    tbody.innerHTML = d.data.map(c => `<tr>
+      <td>${esc(c.email)}</td>
+      <td class="fw-medium">${esc(c.name)}</td>
+      <td><span class="badge ${c.type==='worker'?'bg-info':'bg-secondary'}">${c.type==='worker'?'{{ t.worker_type }}':'{{ t.employer_type }}'}</span></td>
+      <td>${c.has_id_front||c.has_id_back?`<button class="btn btn-sm btn-outline-info" onclick="showKyc('${c.user_id}')"><i class="bi bi-eye ms-1"></i>{{ t.ac_kyc_btn }}</button>`:`<span class="text-muted">\u2014</span>`}</td>
+      <td dir="ltr">${(c.wallet_balance||0).toLocaleString()}</td>
+      <td>
+        ${c.type==='worker'&&!c.is_approved?`<button class="btn btn-sm btn-success me-1" onclick="approveWorkerFromClient('${c.id}')"><i class="bi bi-check-lg ms-1"></i>{{ t.ac_approve }}</button>`:''}
+        <button class="btn btn-sm btn-danger" onclick="deleteClient('${c.user_id}','${esc(c.name)}')"><i class="bi bi-trash ms-1"></i>{{ t.ac_reject }}</button>
+      </td>
+    </tr>`).join('');
+  } catch(e) {
+    document.getElementById('clientsBody').innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">{{ t.error_occurred }}</td></tr>';
+  }
+}
+async function showKyc(userId) {
+  document.getElementById('kycName').textContent = '{{ t.loading_text }}';
+  document.getElementById('kycContent').innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>{{ t.loading_text }}';
+  const modal = new bootstrap.Modal(document.getElementById('kycModal'));
+  modal.show();
+  try {
+    const r = await fetch('/api/admin/clients');
+    const d = await r.json();
+    const c = (d.data||[]).find(x => x.user_id === userId);
+    if (!c) { document.getElementById('kycContent').innerHTML = '<div class="text-danger">{{ t.error_occurred }}</div>'; return; }
+    document.getElementById('kycName').textContent = esc(c.name)+' ('+esc(c.email)+')';
+    let html = '<div class="text-start">';
+    if (c.type === 'worker' && c.profile) {
+      html += `<p><strong>Gender:</strong> ${c.profile.gender||'\u2014'}</p>`;
+      html += `<p><strong>Nationality:</strong> ${c.profile.nationality||'\u2014'}</p>`;
+      html += `<p><strong>Bio:</strong> ${c.profile.bio||'\u2014'}</p>`;
+    }
+    html += `<p><strong>Phone:</strong> ${c.phone||'\u2014'}</p>`;
+    html += `<p><strong>City:</strong> ${c.city||'\u2014'}</p>`;
+    html += `<p><strong>Wallet:</strong> ${(c.wallet_balance||0).toLocaleString()}</p>`;
+    if (c.has_id_front) html += '<h6 class="mt-3">ID Front:</h6><img src="'+esc(c.id_image_front)+'" class="img-fluid rounded border" style="max-height:300px" onerror="this.parentElement.innerHTML=\'<div class=text-danger>Image not available</div>\'">';
+    if (c.has_id_back) html += '<h6 class="mt-3">ID Back:</h6><img src="'+esc(c.id_image_back)+'" class="img-fluid rounded border" style="max-height:300px" onerror="this.parentElement.innerHTML=\'<div class=text-danger>Image not available</div>\'">';
+    html += '</div>';
+    document.getElementById('kycContent').innerHTML = html;
+  } catch(e) {
+    document.getElementById('kycContent').innerHTML = '<div class="text-danger">{{ t.error_occurred }}</div>';
+  }
+}
+async function approveWorkerFromClient(id) {
+  if (!confirm('{{ t.ad_confirm_approve }}')) return;
+  await fetch('/api/admin/approve-worker/'+id, { method:'POST' });
+  loadClients();
+}
+async function deleteClient(userId, name) {
+  if (!confirm('{{ t.ac_reject_confirm }}\n\n'+name)) return;
+  const r = await fetch('/api/admin/delete-client/'+userId, { method:'POST' });
+  const d = await r.json();
+  if (d.success) { loadClients(); } else { alert(d.message); }
+}
+function esc(s) { return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]}); }
+document.addEventListener('DOMContentLoaded', loadClients);
+</script>
+{% endblock %}

@@ -459,6 +459,32 @@ async def admin_dashboard(request: Request):
     total_applications = len(applications.data)
     return render_template(request, "admin/dashboard.html", user=user, workers=workers.data, jobs=jobs.data, employers=employers.data, total_workers=total_workers, total_employers=total_employers, total_jobs=total_jobs, total_applications=total_applications)
 
+@app.get("/admin/workers-pending", response_class=HTMLResponse)
+async def admin_workers_pending(request: Request):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": return RedirectResponse("/", status_code=302)
+    workers = supabase.table("workers").select("*").eq("is_approved", False).order("created_at", desc=True).execute()
+    return render_template(request, "admin/workers_pending.html", user=user, pending=workers.data)
+
+@app.get("/admin/clients", response_class=HTMLResponse)
+async def admin_clients_page(request: Request):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": return RedirectResponse("/", status_code=302)
+    return render_template(request, "admin/clients.html", user=user)
+
+@app.get("/admin/jobs", response_class=HTMLResponse)
+async def admin_jobs_page(request: Request):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": return RedirectResponse("/", status_code=302)
+    jobs = supabase.table("jobs").select("*").order("created_at", desc=True).execute()
+    return render_template(request, "admin/jobs.html", user=user, jobs=jobs.data)
+
+@app.get("/admin/payment-methods", response_class=HTMLResponse)
+async def admin_payment_methods_page(request: Request):
+    user = await get_current_user(request)
+    if not user or user.get("email") != "admin@sanad.com": return RedirectResponse("/", status_code=302)
+    return render_template(request, "admin/payment_methods.html", user=user)
+
 @app.post("/api/admin/approve-worker/{worker_id}")
 async def approve_worker(request: Request, worker_id: str):
     user = await get_current_user(request)
@@ -472,8 +498,22 @@ async def reject_worker(request: Request, worker_id: str):
     user = await get_current_user(request)
     if not user or user.get("email") != "admin@sanad.com":
         raise HTTPException(403)
-    supabase_admin.table("workers").update({"is_approved": False}).eq("id", worker_id).execute()
-    return {"success": True, "message": "تم رفض العامل"}
+    worker = supabase_admin.table("workers").select("user_id").eq("id", worker_id).execute()
+    if worker.data:
+        uid = worker.data[0]["user_id"]
+        supabase_admin.table("applications").delete().eq("worker_id", uid).execute()
+        supabase_admin.table("saved_jobs").delete().eq("user_id", uid).execute()
+        supabase_admin.table("wallets").delete().eq("user_id", uid).execute()
+        supabase_admin.table("notifications").delete().eq("user_id", uid).execute()
+        supabase_admin.table("workers").delete().eq("id", worker_id).execute()
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                await client.delete(
+                    f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users/{uid}",
+                    headers={"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}", "apikey": SUPABASE_SERVICE_KEY}
+                )
+        except: pass
+    return {"success": True}
 
 @app.post("/api/admin/close-job/{job_id}")
 async def close_job(request: Request, job_id: str):
@@ -1005,17 +1045,27 @@ async def admin_delete_client(request: Request, user_id: str):
     user = await get_current_user(request)
     if not user or user.get("email") != "admin@sanad.com": raise HTTPException(403)
     try:
+        jobs = supabase_admin.table("jobs").select("id").eq("employer_id", user_id).execute()
+        job_ids = [j["id"] for j in (jobs.data or [])]
+        for jid in job_ids:
+            supabase_admin.table("applications").delete().eq("job_id", jid).execute()
+        supabase_admin.table("jobs").delete().eq("employer_id", user_id).execute()
+        supabase_admin.table("applications").delete().eq("worker_id", user_id).execute()
+        supabase_admin.table("saved_jobs").delete().eq("user_id", user_id).execute()
         supabase_admin.table("workers").delete().eq("user_id", user_id).execute()
         supabase_admin.table("employers").delete().eq("user_id", user_id).execute()
         supabase_admin.table("wallets").delete().eq("user_id", user_id).execute()
         supabase_admin.table("notifications").delete().eq("user_id", user_id).execute()
         supabase_admin.table("messages").delete().or_(f"sender_id.eq.{user_id},receiver_id.eq.{user_id}").execute()
-        async with httpx.AsyncClient(timeout=15) as client:
-            await client.delete(
-                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users/{user_id}",
-                headers={"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"}
-            )
-        return {"success": True, "message": "تم حذف الحساب"}
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                await client.delete(
+                    f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users/{user_id}",
+                    headers={"Authorization": f"Bearer {SUPABASE_SERVICE_KEY}", "apikey": SUPABASE_SERVICE_KEY}
+                )
+        except:
+            pass
+        return {"success": True}
     except Exception as e:
         return JSONResponse({"success": False, "message": str(e)}, status_code=400)
 

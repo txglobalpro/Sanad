@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}{{ t.pm_title }} - Sanad{% endblock %}
+{% block meta_desc %}{{ t.pm_title }} - Sanad{% endblock %}
+{% block content %}
+<section class="hero-section bg-dark text-white">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-1">{{ t.pm_title }}</h4>
+      <p class="mb-0 opacity-75"><a href="/admin/dashboard" class="text-white-50 text-decoration-none">{{ t.ad_back }}</a></p>
+    </div>
+    <button class="btn btn-light btn-sm" onclick="showAddPaymentMethod()"><i class="bi bi-plus-lg ms-1"></i>{{ t.pm_add }}</button>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-info-circle flex-shrink-0"></i>
+      <div><strong>{{ t.pm_deposit_info_title }}:</strong> {{ t.pm_deposit_info }}</div>
+    </div>
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{{ t.pm_currency }}</th>
+                <th>{{ t.pm_network }}</th>
+                <th>{{ t.pm_address }}</th>
+                <th>{{ t.ad_th_action }}</th>
+              </tr>
+            </thead>
+            <tbody id="paymentMethodsBody">
+              <tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-arrow-clockwise spin me-2"></i>{{ t.loading_text }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="modal fade" id="paymentModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ t.pm_add }} {{ t.pm_title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="paymentForm" onsubmit="savePaymentMethod(event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">{{ t.pm_currency }}</label>
+            <select class="form-select" id="pmCurrency" required onchange="updateNetworkHint()">
+              <option value="">{{ t.pm_select_currency }}</option>
+              <option value="BTC">Bitcoin (BTC)</option>
+              <option value="ETH">Ethereum (ETH)</option>
+              <option value="USDT">Tether (USDT)</option>
+              <option value="USDC">USD Coin (USDC)</option>
+              <option value="BNB">Binance Coin (BNB)</option>
+              <option value="TRX">Tron (TRX)</option>
+              <option value="SOL">Solana (SOL)</option>
+              <option value="XRP">XRP</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ t.pm_network }}</label>
+            <input type="text" class="form-control" id="pmNetwork" required readonly placeholder="{{ t.pm_network_hint }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ t.pm_address }}</label>
+            <textarea class="form-control font-monospace" id="pmAddress" rows="2" required placeholder="{{ t.pm_address_placeholder }}"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t.cancel_button }}</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg ms-1"></i>{{ t.pm_add }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const NETWORK_MAP = {
+  'BTC': ['Bitcoin', 'Lightning'],
+  'ETH': ['Ethereum (ERC20)'],
+  'USDT': ['Ethereum (ERC20)', 'Tron (TRC20)', 'BNB Smart Chain (BEP20)', 'Solana'],
+  'USDC': ['Ethereum (ERC20)', 'BNB Smart Chain (BEP20)', 'Solana'],
+  'BNB': ['BNB Smart Chain (BEP20)', 'BNB Beacon Chain (BEP2)'],
+  'TRX': ['Tron (TRC20)'],
+  'SOL': ['Solana'],
+  'XRP': ['XRP Ledger']
+};
+function updateNetworkHint() {
+  const cur = document.getElementById('pmCurrency').value;
+  const inp = document.getElementById('pmNetwork');
+  inp.value = cur && NETWORK_MAP[cur] ? NETWORK_MAP[cur].join(' / ') : '';
+}
+async function loadPaymentMethods() {
+  try {
+    const r = await fetch('/api/admin/payment-methods');
+    const d = await r.json();
+    const tbody = document.getElementById('paymentMethodsBody');
+    if (!d.data || d.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">{{ t.pm_no_methods }}</td></tr>';
+      return;
+    }
+    tbody.innerHTML = d.data.map(p => `<tr>
+      <td class="fw-bold">${esc(p.currency)}</td>
+      <td>${esc(p.network)}</td>
+      <td class="font-monospace" style="word-break:break-all;max-width:300px">${esc(p.wallet_address)}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="deletePaymentMethod('${p.id}')"><i class="bi bi-trash ms-1"></i>{{ t.pm_delete }}</button></td>
+    </tr>`).join('');
+  } catch(e) {
+    document.getElementById('paymentMethodsBody').innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">{{ t.error_occurred }}</td></tr>';
+  }
+}
+function showAddPaymentMethod() {
+  document.getElementById('paymentForm').reset();
+  document.getElementById('pmNetwork').value = '';
+  new bootstrap.Modal(document.getElementById('paymentModal')).show();
+}
+async function savePaymentMethod(e) {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append('currency', document.getElementById('pmCurrency').value);
+  fd.append('network', document.getElementById('pmNetwork').value);
+  fd.append('wallet_address', document.getElementById('pmAddress').value);
+  const r = await fetch('/api/admin/payment-methods', { method:'POST', body:fd });
+  const d = await r.json();
+  if (d.success) {
+    bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+    loadPaymentMethods();
+  } else { alert(d.message); }
+}
+async function deletePaymentMethod(id) {
+  if (!confirm('{{ t.pm_delete_confirm }}')) return;
+  await fetch('/api/admin/payment-methods/'+id+'/delete', { method:'POST' });
+  loadPaymentMethods();
+}
+function esc(s) { return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]}); }
+document.addEventListener('DOMContentLoaded', loadPaymentMethods);
+</script>
+{% endblock %}

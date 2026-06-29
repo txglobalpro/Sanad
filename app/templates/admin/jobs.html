@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ t.ad_section_jobs }} - Sanad{% endblock %}
+{% block meta_desc %}{{ t.ad_section_jobs }} - Sanad{% endblock %}
+{% block content %}
+<section class="hero-section bg-dark text-white">
+  <div class="container">
+    <h4 class="fw-bold mb-1">{{ t.ad_section_jobs }}</h4>
+    <p class="mb-0 opacity-75"><a href="/admin/dashboard" class="text-white-50 text-decoration-none">{{ t.ad_back }}</a></p>
+  </div>
+</section>
+
+<section class="section-padding">
+  <div class="container">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>{{ t.ad_th_name }}</th>
+                <th>{{ t.ed_th_city }}</th>
+                <th>{{ t.ed_th_pay }}</th>
+                <th>{{ t.ed_th_status }}</th>
+                <th>{{ t.ad_th_action }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for j in jobs %}
+              <tr>
+                <td class="fw-medium">{{ j.title }}</td>
+                <td>{{ j.city }}</td>
+                <td>{{ j.pay }} ل.س</td>
+                <td>
+                  {% if j.status == 'open' %}
+                    <span class="badge bg-success">{{ t.ed_status_open }}</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ t.ed_status_closed }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if j.status == 'open' %}
+                    <button class="btn btn-sm btn-outline-danger" onclick="closeJob('{{ j.id }}')"><i class="bi bi-x-circle ms-1"></i>{{ t.ad_close }}</button>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+async function closeJob(id) {
+  if (!confirm('{{ t.ad_confirm_close }}')) return;
+  await fetch('/api/admin/close-job/'+id, { method:'POST' });
+  location.reload();
+}
+</script>
+{% endblock %}
