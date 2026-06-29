@@ -65,7 +65,9 @@
           </div>
           <div class="mb-3">
             <label class="form-label">{{ t.pm_network }}</label>
-            <input type="text" class="form-control" id="pmNetwork" required readonly placeholder="{{ t.pm_network_hint }}">
+            <select class="form-select" id="pmNetwork" required>
+              <option value="">{{ t.pm_select_currency }} {{ t.pm_network_hint }}</option>
+            </select>
           </div>
           <div class="mb-3">
             <label class="form-label">{{ t.pm_address }}</label>
@@ -73,7 +75,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t.cancel_button }}</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t.cancel }}</button>
           <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg ms-1"></i>{{ t.pm_add }}</button>
         </div>
       </form>
@@ -95,8 +97,15 @@ const NETWORK_MAP = {
 };
 function updateNetworkHint() {
   const cur = document.getElementById('pmCurrency').value;
-  const inp = document.getElementById('pmNetwork');
-  inp.value = cur && NETWORK_MAP[cur] ? NETWORK_MAP[cur].join(' / ') : '';
+  const sel = document.getElementById('pmNetwork');
+  sel.innerHTML = '<option value="">{{ t.pm_select_currency }} {{ t.pm_network_hint }}</option>';
+  if (cur && NETWORK_MAP[cur]) {
+    NETWORK_MAP[cur].forEach(function(n) {
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      sel.appendChild(opt);
+    });
+  }
 }
 async function loadPaymentMethods() {
   try {

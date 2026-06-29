@@ -985,6 +985,19 @@ a:hover { color: var(--primary-dark); }
   color: var(--text-secondary);
 }
 
+[data-theme="dark"] .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .bg-light {
+  background: var(--dark-100) !important;
+}
+
+[data-theme="dark"] .card-header.bg-white {
+  background: var(--dark-100) !important;
+  color: var(--text-primary);
+}
+
 /* ===== Notification Banner ===== */
 .notif-banner {
   position: fixed;
