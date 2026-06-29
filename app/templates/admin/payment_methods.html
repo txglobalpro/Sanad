@@ -18,16 +18,16 @@
       <i class="bi bi-info-circle flex-shrink-0"></i>
       <div><strong>{{ t.pm_deposit_info_title }}:</strong> {{ t.pm_deposit_info }}</div>
     </div>
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 hover-lift">
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead>
               <tr>
-                <th>{{ t.pm_currency }}</th>
-                <th>{{ t.pm_network }}</th>
-                <th>{{ t.pm_address }}</th>
-                <th>{{ t.ad_th_action }}</th>
+                <th><i class="bi bi-currency-bitcoin table-header-icon"></i>{{ t.pm_currency }}</th>
+                <th><i class="bi bi-diagram-2 table-header-icon"></i>{{ t.pm_network }}</th>
+                <th><i class="bi bi-hash table-header-icon"></i>{{ t.pm_address }}</th>
+                <th><i class="bi bi-gear table-header-icon"></i>{{ t.ad_th_action }}</th>
               </tr>
             </thead>
             <tbody id="paymentMethodsBody">
@@ -44,7 +44,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">{{ t.pm_add }} {{ t.pm_title }}</h5>
+        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle ms-2 text-primary"></i>{{ t.pm_add }} {{ t.pm_title }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form id="paymentForm" onsubmit="savePaymentMethod(event)">

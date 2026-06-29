@@ -11,18 +11,18 @@
 
 <section class="section-padding">
   <div class="container">
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 hover-lift">
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead>
               <tr>
-                <th>{{ t.ac_email }}</th>
-                <th>{{ t.ac_name }}</th>
-                <th>{{ t.ac_type }}</th>
-                <th>{{ t.ac_kyc }}</th>
-                <th>{{ t.ac_wallet }}</th>
-                <th>{{ t.ad_th_action }}</th>
+                <th><i class="bi bi-envelope table-header-icon"></i>{{ t.ac_email }}</th>
+                <th><i class="bi bi-person table-header-icon"></i>{{ t.ac_name }}</th>
+                <th><i class="bi bi-shield table-header-icon"></i>{{ t.ac_type }}</th>
+                <th><i class="bi bi-file-image table-header-icon"></i>{{ t.ac_kyc }}</th>
+                <th><i class="bi bi-wallet2 table-header-icon"></i>{{ t.ac_wallet }}</th>
+                <th><i class="bi bi-gear table-header-icon"></i>{{ t.ad_th_action }}</th>
               </tr>
             </thead>
             <tbody id="clientsBody">
@@ -36,14 +36,14 @@
 </section>
 
 <div class="modal fade" id="kycModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">{{ t.ac_kyc }} - <span id="kycName"></span></h5>
+        <h5 class="modal-title fw-bold"><i class="bi bi-file-image ms-2 text-info"></i>{{ t.ac_kyc }} - <span id="kycName" class="text-info"></span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
-        <div id="kycContent" class="text-center text-muted py-4">{{ t.loading_text }}</div>
+      <div class="modal-body" id="kycContent">
+        <div class="text-center text-muted py-4"><i class="bi bi-arrow-clockwise spin me-2"></i>{{ t.loading_text }}</div>
       </div>
     </div>
   </div>

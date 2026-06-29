@@ -1158,3 +1158,12 @@ a:hover { color: var(--primary-dark); }
 .exp-card, .edu-card { background:var(--dark-100); border-radius:12px; padding:1rem; margin-bottom:0.75rem; position:relative; }
 .exp-card .remove-btn, .edu-card .remove-btn { position:absolute; top:0.5rem; left:0.5rem; background:none; border:none; color:#dc3545; cursor:pointer; }
 [dir="rtl"] .exp-card .remove-btn, [dir="rtl"] .edu-card .remove-btn { left:auto; right:0.5rem; }
+
+/* hover lift effect */
+.hover-lift { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.hover-lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.card.hover-lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+/* table header with icon spacing */
+.table-header-icon { margin-left: 0.4rem; }
+[dir="ltr"] .table-header-icon { margin-left: 0; margin-right: 0.4rem; }

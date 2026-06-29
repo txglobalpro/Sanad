@@ -18,7 +18,7 @@
     <div class="row g-3">
       {% for w in pending %}
       <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm border-0 h-100">
+        <div class="card shadow-sm border-0 h-100 hover-lift">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
               <div>
@@ -27,9 +27,9 @@
                 <small class="text-muted d-block" dir="ltr" style="text-align:right">{{ w.phone or '' }}</small>
               </div>
               {% if w.id_image_front %}
-              <a href="{{ w.id_image_front }}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
+              <a href="{{ w.id_image_front }}" target="_blank" class="btn btn-sm btn-outline-info" title="{{ t.ac_kyc_btn }}"><i class="bi bi-eye"></i></a>
               {% else %}
-              <span class="text-danger small">{{ t.ad_no_id }}</span>
+              <span class="badge bg-warning text-dark">{{ t.ad_no_id }}</span>
               {% endif %}
             </div>
             <div class="d-flex gap-2 mt-3">
