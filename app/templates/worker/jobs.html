@@ -2,37 +2,46 @@
 {% block title %}{{ t.wj_title }} - Sanad{% endblock %}
 {% block meta_desc %}{{ t.wj_title }} - Sanad{% endblock %}
 {% block content %}
-<section class="hero-section bg-primary text-white">
+<section class="bg-primary text-white" style="padding:2rem 0;">
   <div class="container">
-    <h4 class="fw-bold mb-1">{{ t.wj_title }}</h4>
-    <p class="mb-0 opacity-75">{{ t.wj_subtitle }}</p>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h4 class="fw-bold mb-1" style="font-size:1.3rem;">{{ t.wj_title }}</h4>
+        <p class="mb-0 opacity-75 small">{{ t.wj_subtitle }}</p>
+      </div>
+      <div class="text-end">
+        <div class="small opacity-75">{{ t.stat_jobs_total }}</div>
+        <div class="fw-bold" style="font-size:1.4rem;">{{ jobs|length }}</div>
+      </div>
+    </div>
   </div>
 </section>
 
-<section class="section-padding">
+<section style="padding:1.5rem 0;">
   <div class="container">
-    <form method="GET" action="/worker/jobs" class="row g-2 mb-4">
-      <div class="col-12 col-md-4">
-        <input type="text" name="q" class="form-control" placeholder="{{ t.search }}" value="{{ q }}">
+    <!-- Chip-based filter bar -->
+    <form method="GET" action="/worker/jobs" id="jobFilterForm">
+      <div class="chip-scroll mb-3" style="overflow-x:auto;white-space:nowrap;padding-bottom:4px;">
+        <a href="/worker/jobs" class="chip {% if not q and not sel_work_type and not sel_city %}chip-active{% endif %}">{{ t.wj_all_types }}</a>
+        {% for wt in work_types %}
+        <a href="/worker/jobs?work_type={{ wt }}{% if q %}&q={{ q }}{% endif %}{% if sel_city %}&city={{ sel_city }}{% endif %}" class="chip {% if sel_work_type == wt %}chip-active{% endif %}">{{ wt }}</a>
+        {% endfor %}
       </div>
-      <div class="col-6 col-md-3">
-        <select name="work_type" class="form-select">
-          <option value="">{{ t.wj_all_types }}</option>
-          {% for wt in work_types %}
-          <option value="{{ wt }}" {% if sel_work_type == wt %}selected{% endif %}>{{ wt }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-6 col-md-3">
-        <select name="city" class="form-select">
-          <option value="">{{ t.wj_all_cities }}</option>
-          {% for c in cities %}
-          <option value="{{ c }}" {% if sel_city == c %}selected{% endif %}>{{ c }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-12 col-md-2">
-        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search ms-1"></i>{{ t.wj_search }}</button>
+      <div class="row g-2 mb-4">
+        <div class="col">
+          <input type="text" name="q" class="form-control form-control-sm" placeholder="{{ t.search }}" value="{{ q }}">
+        </div>
+        <div class="col-auto">
+          <select name="city" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">{{ t.wj_all_cities }}</option>
+            {% for c in cities %}
+            <option value="{{ c }}" {% if sel_city == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search ms-1"></i>{{ t.wj_search }}</button>
+        </div>
       </div>
     </form>
 
@@ -40,45 +49,57 @@
     <div class="row g-3" id="jobsContainer">
       {% for job in jobs %}
       <div class="col-md-6 col-lg-4 animate-fade-in-up stagger-{{ loop.index0 % 4 + 1 }}">
-        <div class="job-card">
-          {% if job.image_url %}
-          <div class="mb-2" style="height:140px;overflow:hidden;border-radius:8px;">
-            <img src="{{ job.image_url }}" alt="{{ job.title }}" style="width:100%;height:100%;object-fit:cover;">
+        <div class="job-card-modern">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h6 class="job-card-title fw-bold mb-0">{{ job.title }}</h6>
+            <button class="btn btn-sm btn-link p-0 save-job-btn" data-job-id="{{ job.id }}" onclick="toggleSaveJob(this)" style="color:var(--dark-300);text-decoration:none;font-size:1.1rem;">
+              <i class="bi bi-bookmark"></i>
+            </button>
           </div>
-          {% endif %}
-          <h5 class="job-title">{{ job.title }}</h5>
-          <div class="job-meta">
+          <div class="job-card-meta">
             <span><i class="bi bi-geo-alt ms-1"></i>{{ job.city }}</span>
             <span><i class="bi bi-clock ms-1"></i>{{ job.duration }}</span>
             <span><i class="bi bi-cash-stack ms-1"></i>{{ job.pay }} ل.س</span>
           </div>
-          <div class="job-tags">
-            <span class="tag">{{ job.work_type }}</span>
-            <span class="tag tag-success">{{ job.pay }} ل.س</span>
+          <div class="job-card-tags">
+            <span class="badge-tag">{{ job.work_type }}</span>
+            {% if job.status == 'open' %}
+            <span class="badge-tag badge-tag-open">{{ t.ed_status_open }}</span>
+            {% endif %}
           </div>
-          <div class="d-flex gap-1">
-            <a href="/worker/jobs/{{ job.id }}" class="btn btn-outline-primary btn-sm flex-grow-1">
+          <div class="d-flex gap-2 mt-3">
+            <a href="/worker/jobs/{{ job.id }}" class="btn btn-primary btn-sm flex-grow-1">
               <i class="bi bi-eye ms-1"></i>{{ t.wj_view_details }}
             </a>
-            <button class="btn btn-sm btn-outline-secondary save-job-btn" data-job-id="{{ job.id }}" onclick="toggleSaveJob(this)">
-              <i class="bi bi-bookmark"></i>
-            </button>
           </div>
         </div>
       </div>
       {% endfor %}
     </div>
     {% else %}
-    <div class="empty-state text-center">
-      <i class="bi bi-search"></i>
+    <div class="empty-state text-center" style="padding:3rem 1rem;">
+      <i class="bi bi-search" style="font-size:2.5rem;"></i>
       <h5>{{ t.wj_empty_title }}</h5>
-      <p>{{ t.wj_empty_desc }}</p>
+      <p class="text-secondary">{{ t.wj_empty_desc }}</p>
+      <a href="/worker/jobs" class="btn btn-primary btn-sm mt-2">{{ t.wj_all_types }}</a>
     </div>
     {% endif %}
   </div>
 </section>
 {% endblock %}
 {% block extra_js %}
+<style>
+.chip-scroll::-webkit-scrollbar { height:0; }
+.job-card-modern { background:var(--white); border:1px solid var(--dark-200); border-radius:12px; padding:1.25rem; transition:all 0.3s cubic-bezier(0.4,0,0.2,1); height:100%; }
+.job-card-modern:hover { border-color:var(--primary-200); box-shadow:0 8px 24px rgba(37,99,235,0.08); transform:translateY(-2px); }
+.job-card-title { font-size:1rem; color:var(--dark); line-height:1.3; }
+.job-card-meta { display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.5rem 0; }
+.job-card-meta span { font-size:0.8rem; color:var(--dark-500); display:flex; align-items:center; gap:0.2rem; }
+.badge-tag { display:inline-block; background:var(--primary-50); color:var(--primary); padding:0.2rem 0.6rem; border-radius:12px; font-size:0.75rem; font-weight:600; margin:0.1rem; }
+.badge-tag-open { background:#ecfdf5; color:var(--secondary); }
+[data-theme="dark"] .job-card-modern { background:var(--card-bg); border-color:var(--dark-200); }
+[data-theme="dark"] .job-card-title { color:var(--text-primary); }
+</style>
 <script>
 async function toggleSaveJob(btn) {
   const jobId = btn.getAttribute('data-job-id');
@@ -87,9 +108,7 @@ async function toggleSaveJob(btn) {
     const res = await fetch('/api/worker/save-job/' + jobId, { method: 'POST' });
     const json = await res.json();
     if (json.success) {
-      btn.innerHTML = json.saved ? '<i class="bi bi-bookmark-fill"></i>' : '<i class="bi bi-bookmark"></i>';
-      btn.classList.toggle('btn-warning', json.saved);
-      btn.classList.toggle('btn-outline-secondary', !json.saved);
+      btn.innerHTML = json.saved ? '<i class="bi bi-bookmark-fill" style="color:var(--accent);"></i>' : '<i class="bi bi-bookmark"></i>';
     }
   } catch(e) {}
   btn.disabled = false;

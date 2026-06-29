@@ -110,7 +110,24 @@ async def get_wallet(user_id: str):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     user = await get_current_user(request)
-    return render_template(request, "index.html", user=user)
+    try:
+        jobs_all = supabase_admin.table("jobs").select("*", count="exact").execute()
+        total_jobs = jobs_all.count if hasattr(jobs_all, 'count') else len(jobs_all.data or [])
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        today_jobs = len([j for j in (jobs_all.data or []) if j.get("created_at","").startswith(today)])
+        workers_count = len((supabase_admin.table("workers").select("id", count="exact").execute()).data or [])
+        employers_count = len((supabase_admin.table("employers").select("id", count="exact").execute()).data or [])
+        cats = supabase_admin.table("jobs").select("work_type", count="exact").execute()
+        cat_counts = {}
+        for j in (cats.data or []):
+            wt = j.get("work_type", "أخرى")
+            cat_counts[wt] = cat_counts.get(wt, 0) + 1
+        cat_counts = dict(sorted(cat_counts.items(), key=lambda x: -x[1])[:14])
+        emp_result = supabase_admin.table("employers").select("id,company_name,photo_url").limit(30).execute()
+        employers_list = emp_result.data if emp_result and hasattr(emp_result, 'data') else []
+    except:
+        total_jobs = 0; today_jobs = 0; workers_count = 0; employers_count = 0; cat_counts = {}; employers_list = []
+    return render_template(request, "index.html", user=user, total_jobs=total_jobs, today_jobs=today_jobs, workers_count=workers_count, employers_count=employers_count, cat_counts=cat_counts, employers=employers_list, work_types=WORK_TYPES, cities=CITIES)
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):

@@ -1,21 +1,20 @@
 {% extends "base.html" %}
 {% block title %}{{ t.site_name }} - {% if lang == 'ar' %}منصة الربط بين العمال وأصحاب العمل في سورية{% else %}Jobs Platform Connecting Workers & Employers in Syria{% endif %}{% endblock %}
 {% block content %}
-
-<!-- Hero -->
-<section class="hero-section bg-primary text-white">
+<!-- Hero - Compact -->
+<section class="hero-section bg-primary text-white" style="padding:3.5rem 0;">
   <div class="container text-center">
     <div class="row justify-content-center">
       <div class="col-lg-8">
-        <img src="/static/images/logo.svg" alt="Sanad" height="60" class="mb-4 opacity-90">
-        <h1 class="display-4 fw-bold mb-3 animate-fade-in-up">{{ t.hero_title }}</h1>
-        <p class="hero-subtitle lead mb-4 animate-fade-in-up stagger-1">{{ t.hero_subtitle }}</p>
-        <div class="d-flex justify-content-center gap-3 flex-wrap animate-fade-in-up stagger-2">
-          <a href="/register" class="btn btn-warning btn-lg px-5">
-            <i class="bi bi-person-plus ms-2"></i>{{ t.hero_start }}
+        <img src="/static/images/logo.svg" alt="Sanad" height="52" class="mb-3 opacity-90">
+        <h1 class="fw-bold mb-2" style="font-size:2.2rem;">{{ t.hero_title }}</h1>
+        <p class="hero-subtitle lead mb-3" style="font-size:1rem;">{{ t.hero_subtitle }}</p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+          <a href="/register" class="btn btn-warning px-4">
+            <i class="bi bi-person-plus ms-1"></i>{{ t.hero_start }}
           </a>
-          <a href="/login" class="btn btn-outline-light btn-lg px-4">
-            <i class="bi bi-box-arrow-in-left ms-2"></i>{{ t.hero_login }}
+          <a href="/login" class="btn btn-outline-light px-3">
+            <i class="bi bi-box-arrow-in-left ms-1"></i>{{ t.hero_login }}
           </a>
         </div>
       </div>
@@ -23,59 +22,137 @@
   </div>
 </section>
 
-<!-- Stats -->
-<section class="section-padding bg-white">
+<!-- Stats Bar -->
+<section style="padding:1.25rem 0;background:var(--white);border-bottom:1px solid var(--dark-200);">
   <div class="container">
-    <div class="row g-3 text-center">
-      <div class="col-4">
-        <div class="stat-number text-primary">+500</div>
-        <div class="stat-label">{{ t.stat_workers }}</div>
+    <div class="row g-2 text-center">
+      <div class="col-3">
+        <div class="fw-bold" style="font-size:1.5rem;color:var(--primary);">{{ total_jobs or 0 }}</div>
+        <small class="text-secondary" style="font-size:0.8rem;">{{ t.stat_jobs_total }}</small>
       </div>
-      <div class="col-4">
-        <div class="stat-number text-secondary">+14</div>
-        <div class="stat-label">{{ t.stat_cities }}</div>
+      <div class="col-3">
+        <div class="fw-bold" style="font-size:1.5rem;color:var(--secondary);">{{ today_jobs or 0 }}</div>
+        <small class="text-secondary" style="font-size:0.8rem;">{{ t.stat_jobs_today }}</small>
       </div>
-      <div class="col-4">
-        <div class="stat-number text-warning">100%</div>
-        <div class="stat-label">{{ t.stat_free }}</div>
+      <div class="col-3">
+        <div class="fw-bold" style="font-size:1.5rem;color:var(--accent);">{{ workers_count or '+500' }}</div>
+        <small class="text-secondary" style="font-size:0.8rem;">{{ t.stat_workers }}</small>
+      </div>
+      <div class="col-3">
+        <div class="fw-bold" style="font-size:1.5rem;color:var(--dark-600);">{{ employers_count or '+50' }}</div>
+        <small class="text-secondary" style="font-size:0.8rem;">{{ t.stat_employers }}</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Search Chips (like jobs.bg) -->
+<section style="padding:1.5rem 0;background:var(--bg);">
+  <div class="container">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-search text-muted"></i>
+      <small class="text-muted fw-medium">{{ t.hero_search }} <strong class="text-primary">{{ total_jobs or 0 }}</strong> {{ t.stat_jobs_total }}</small>
+    </div>
+    <div class="chip-scroll" style="overflow-x:auto;white-space:nowrap;padding-bottom:4px;">
+      {% for wt in work_types %}
+      <a href="/worker/jobs?work_type={{ wt }}" class="chip">{{ wt }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Category Grid + Employer Logos (2-column like jobs.bg) -->
+<section style="padding:2rem 0;background:var(--white);">
+  <div class="container">
+    <div class="row g-4">
+      <!-- Left: Categories -->
+      <div class="col-md-7">
+        <h6 class="fw-bold mb-3 text-secondary" style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;">
+          <i class="bi bi-grid ms-1"></i>{{ t.categories_title }}
+        </h6>
+        <div class="row g-2">
+          {% for wt, count in cat_counts.items() %}
+          <div class="col-6 col-lg-4">
+            <a href="/worker/jobs?work_type={{ wt }}" class="cat-chip">
+              <span class="cat-chip-label">{{ wt }}</span>
+              <span class="cat-chip-count">{{ count }}</span>
+            </a>
+          </div>
+          {% endfor %}
+          {% if cat_counts|length == 0 %}
+          {% for wt in work_types %}
+          <div class="col-6 col-lg-4">
+            <a href="/worker/jobs?work_type={{ wt }}" class="cat-chip">
+              <span class="cat-chip-label">{{ wt }}</span>
+              <span class="cat-chip-count">0</span>
+            </a>
+          </div>
+          {% endfor %}
+          {% endif %}
+        </div>
+        <a href="/worker/jobs" class="btn btn-outline-primary btn-sm mt-3">
+          <i class="bi bi-arrow-left ms-1"></i>{{ t.wj_search }}
+        </a>
+      </div>
+      <!-- Right: Top Employers -->
+      <div class="col-md-5">
+        <h6 class="fw-bold mb-3 text-secondary" style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;">
+          <i class="bi bi-building ms-1"></i>{{ t.top_employers }}
+        </h6>
+        <div class="row g-2">
+          {% for emp in employers %}
+          {% if emp.company_name %}
+          <div class="col-6 col-lg-4">
+            <div class="emp-logo-box">
+              {% if emp.photo_url %}
+              <img src="{{ emp.photo_url }}" alt="{{ emp.company_name }}" class="emp-logo-img" loading="lazy">
+              {% else %}
+              <div class="emp-logo-placeholder">{{ emp.company_name[:2] }}</div>
+              {% endif %}
+              <small class="emp-logo-name">{{ emp.company_name }}</small>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- Features -->
-<section class="section-padding">
+<section class="section-padding" style="padding:2.5rem 0;">
   <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="section-title">{{ t.features_title }}</h2>
-      <p class="section-subtitle">{{ t.features_subtitle }}</p>
+    <div class="text-center mb-4">
+      <h2 class="section-title" style="font-size:1.3rem;">{{ t.features_title }}</h2>
+      <p class="section-subtitle" style="font-size:0.9rem;">{{ t.features_subtitle }}</p>
     </div>
-    <div class="row g-4">
+    <div class="row g-3">
       <div class="col-md-4 animate-fade-in-up stagger-1">
-        <div class="feature-card">
-          <div class="icon-circle" style="background:var(--primary-50);color:var(--primary);">
-            <i class="bi bi-person-badge fs-3"></i>
+        <div class="feature-card" style="padding:1.5rem;">
+          <div class="icon-circle" style="width:48px;height:48px;background:var(--primary-50);color:var(--primary);">
+            <i class="bi bi-person-badge fs-4"></i>
           </div>
-          <h5>{{ t.feature_worker_title }}</h5>
-          <p>{{ t.feature_worker_desc }}</p>
+          <h5 style="font-size:1rem;">{{ t.feature_worker_title }}</h5>
+          <p style="font-size:0.85rem;">{{ t.feature_worker_desc }}</p>
         </div>
       </div>
       <div class="col-md-4 animate-fade-in-up stagger-2">
-        <div class="feature-card">
-          <div class="icon-circle" style="background:#ecfdf5;color:var(--secondary);">
-            <i class="bi bi-briefcase fs-3"></i>
+        <div class="feature-card" style="padding:1.5rem;">
+          <div class="icon-circle" style="width:48px;height:48px;background:#ecfdf5;color:var(--secondary);">
+            <i class="bi bi-briefcase fs-4"></i>
           </div>
-          <h5>{{ t.feature_employer_title }}</h5>
-          <p>{{ t.feature_employer_desc }}</p>
+          <h5 style="font-size:1rem;">{{ t.feature_employer_title }}</h5>
+          <p style="font-size:0.85rem;">{{ t.feature_employer_desc }}</p>
         </div>
       </div>
       <div class="col-md-4 animate-fade-in-up stagger-3">
-        <div class="feature-card">
-          <div class="icon-circle" style="background:#fffbeb;color:var(--accent);">
-            <i class="bi bi-shield-check fs-3"></i>
+        <div class="feature-card" style="padding:1.5rem;">
+          <div class="icon-circle" style="width:48px;height:48px;background:#fffbeb;color:var(--accent);">
+            <i class="bi bi-shield-check fs-4"></i>
           </div>
-          <h5>{{ t.feature_trust_title }}</h5>
-          <p>{{ t.feature_trust_desc }}</p>
+          <h5 style="font-size:1rem;">{{ t.feature_trust_title }}</h5>
+          <p style="font-size:0.85rem;">{{ t.feature_trust_desc }}</p>
         </div>
       </div>
     </div>
@@ -83,32 +160,32 @@
 </section>
 
 <!-- How It Works -->
-<section class="section-padding bg-white">
+<section class="section-padding" style="padding:2.5rem 0;background:var(--white);">
   <div class="container">
-    <div class="text-center mb-5">
-      <h2 class="section-title">{{ t.how_title }}</h2>
-      <p class="section-subtitle">{{ t.how_subtitle }}</p>
+    <div class="text-center mb-4">
+      <h2 class="section-title" style="font-size:1.3rem;">{{ t.how_title }}</h2>
+      <p class="section-subtitle" style="font-size:0.9rem;">{{ t.how_subtitle }}</p>
     </div>
-    <div class="row g-4">
+    <div class="row g-3">
       <div class="col-md-4">
         <div class="text-center">
-          <div class="icon-circle mx-auto mb-3" style="width:80px;height:80px;background:var(--primary-50);color:var(--primary);font-size:2rem;font-weight:800;">1</div>
-          <h5>{{ t.step1_title }}</h5>
-          <p class="text-secondary small">{{ t.step1_desc }}</p>
+          <div class="icon-circle mx-auto mb-2" style="width:64px;height:64px;background:var(--primary-50);color:var(--primary);font-size:1.5rem;font-weight:800;">1</div>
+          <h5 style="font-size:1rem;">{{ t.step1_title }}</h5>
+          <p class="text-secondary small" style="font-size:0.85rem;">{{ t.step1_desc }}</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="text-center">
-          <div class="icon-circle mx-auto mb-3" style="width:80px;height:80px;background:#ecfdf5;color:var(--secondary);font-size:2rem;font-weight:800;">2</div>
-          <h5>{{ t.step2_title }}</h5>
-          <p class="text-secondary small">{{ t.step2_desc }}</p>
+          <div class="icon-circle mx-auto mb-2" style="width:64px;height:64px;background:#ecfdf5;color:var(--secondary);font-size:1.5rem;font-weight:800;">2</div>
+          <h5 style="font-size:1rem;">{{ t.step2_title }}</h5>
+          <p class="text-secondary small" style="font-size:0.85rem;">{{ t.step2_desc }}</p>
         </div>
       </div>
       <div class="col-md-4">
         <div class="text-center">
-          <div class="icon-circle mx-auto mb-3" style="width:80px;height:80px;background:#fffbeb;color:var(--accent);font-size:2rem;font-weight:800;">3</div>
-          <h5>{{ t.step3_title }}</h5>
-          <p class="text-secondary small">{{ t.step3_desc }}</p>
+          <div class="icon-circle mx-auto mb-2" style="width:64px;height:64px;background:#fffbeb;color:var(--accent);font-size:1.5rem;font-weight:800;">3</div>
+          <h5 style="font-size:1rem;">{{ t.step3_title }}</h5>
+          <p class="text-secondary small" style="font-size:0.85rem;">{{ t.step3_desc }}</p>
         </div>
       </div>
     </div>
@@ -116,19 +193,19 @@
 </section>
 
 <!-- Reviews -->
-<section class="section-padding" id="reviews" style="background:linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+<section class="section-padding" id="reviews" style="padding:2.5rem 0;background:linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
   <div class="container">
-    <div class="text-center mb-4">
-      <h2 class="section-title">{{ t.reviews_title }}</h2>
-      <p class="section-subtitle">{{ t.reviews_subtitle }}</p>
+    <div class="text-center mb-3">
+      <h2 class="section-title" style="font-size:1.3rem;">{{ t.reviews_title }}</h2>
+      <p class="section-subtitle" style="font-size:0.9rem;">{{ t.reviews_subtitle }}</p>
     </div>
     <div id="reviews-carousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000">
       <div class="carousel-inner" id="reviews-list"></div>
-      <div class="carousel-indicators position-static mt-3" id="reviews-indicators"></div>
-      <button class="carousel-control-prev" type="button" data-bs-target="#reviews-carousel" data-bs-slide="prev" style="width:40px;height:40px;top:50%;transform:translateY(-50%);background:var(--primary);border-radius:50%;">
+      <div class="carousel-indicators position-static mt-2" id="reviews-indicators"></div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#reviews-carousel" data-bs-slide="prev" style="width:36px;height:36px;top:50%;transform:translateY(-50%);background:var(--primary);border-radius:50%;">
         <i class="bi bi-chevron-right"></i>
       </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#reviews-carousel" data-bs-slide="next" style="width:40px;height:40px;top:50%;transform:translateY(-50%);background:var(--primary);border-radius:50%;">
+      <button class="carousel-control-next" type="button" data-bs-target="#reviews-carousel" data-bs-slide="next" style="width:36px;height:36px;top:50%;transform:translateY(-50%);background:var(--primary);border-radius:50%;">
         <i class="bi bi-chevron-left"></i>
       </button>
     </div>
@@ -136,32 +213,46 @@
 </section>
 
 <!-- Trust -->
-<section class="section-padding" style="background:linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);">
+<section style="padding:2rem 0;background:linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);">
   <div class="container text-center text-white">
-    <h2 class="fw-bold mb-3">{{ t.trust_title }}</h2>
-    <p class="lead mb-0 opacity-90">{{ t.trust_desc }}</p>
+    <h2 class="fw-bold mb-2" style="font-size:1.3rem;">{{ t.trust_title }}</h2>
+    <p class="mb-0 opacity-90" style="font-size:0.95rem;">{{ t.trust_desc }}</p>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="section-padding bg-white">
+<section class="section-padding" style="padding:2.5rem 0;background:var(--white);">
   <div class="container text-center">
-    <h2 class="section-title mb-3">{{ t.cta_title }}</h2>
-    <p class="section-subtitle mb-4">{{ t.cta_subtitle }}</p>
-    <a href="/register" class="btn btn-primary btn-lg px-5">
-      <i class="bi bi-rocket-takeoff ms-2"></i>{{ t.cta_btn }}
+    <h2 class="section-title mb-2" style="font-size:1.3rem;">{{ t.cta_title }}</h2>
+    <p class="section-subtitle mb-3" style="font-size:0.9rem;">{{ t.cta_subtitle }}</p>
+    <a href="/register" class="btn btn-primary px-4">
+      <i class="bi bi-rocket-takeoff ms-1"></i>{{ t.cta_btn }}
     </a>
   </div>
 </section>
-
 {% endblock %}
 {% block extra_js %}
 <style>
-.carousel-control-prev i, .carousel-control-next i { font-size:1.2rem; line-height:1; }
-.carousel .carousel-indicators button { width:10px; height:10px; border-radius:50%; border:0; margin:0 4px; }
+.carousel-control-prev i, .carousel-control-next i { font-size:1rem; line-height:1; }
+.carousel .carousel-indicators button { width:8px; height:8px; border-radius:50%; border:0; margin:0 3px; }
 .carousel .carousel-indicators .active { background:var(--primary) !important; }
-.review-card { transition:transform 0.3s ease, box-shadow 0.3s ease; }
-.review-card:hover { transform:translateY(-4px); box-shadow:0 12px 24px rgba(0,0,0,0.1) !important; }
+.chip-scroll::-webkit-scrollbar { height:0; }
+.chip { display:inline-block; padding:0.35rem 1rem; margin:0.2rem; background:var(--dark-100); color:var(--dark-600); border-radius:20px; font-size:0.8rem; font-weight:500; text-decoration:none; transition:all 0.2s; white-space:nowrap; }
+.chip:hover { background:var(--primary); color:#fff; }
+.cat-chip { display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.75rem; background:var(--dark-100); border-radius:8px; text-decoration:none; transition:all 0.2s; }
+.cat-chip:hover { background:var(--primary-50); transform:translateY(-1px); }
+.cat-chip-label { font-size:0.8rem; font-weight:500; color:var(--dark); }
+.cat-chip-count { font-size:0.75rem; font-weight:700; color:var(--primary); background:var(--primary-50); padding:0.1rem 0.5rem; border-radius:10px; }
+.emp-logo-box { display:flex; flex-direction:column; align-items:center; gap:0.25rem; padding:0.5rem; background:var(--dark-100); border-radius:8px; text-align:center; min-height:60px; justify-content:center; }
+.emp-logo-img { max-width:100%; height:28px; object-fit:contain; }
+.emp-logo-placeholder { width:36px; height:36px; border-radius:50%; background:var(--primary-50); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; }
+.emp-logo-name { font-size:0.65rem; color:var(--dark-500); line-height:1.2; }
+[data-theme="dark"] .chip { background:var(--dark-200); color:var(--text-primary); }
+[data-theme="dark"] .chip:hover { background:var(--primary); color:#fff; }
+[data-theme="dark"] .cat-chip { background:var(--dark-200); }
+[data-theme="dark"] .cat-chip:hover { background:var(--primary-50); }
+[data-theme="dark"] .cat-chip-label { color:var(--text-primary); }
+[data-theme="dark"] .emp-logo-box { background:var(--dark-200); }
 </style>
 <script>
 const REVIEW_LABELS = { employer: '{{ t.review_employer }}', worker: '{{ t.review_worker }}' };
@@ -172,62 +263,34 @@ async function loadReviews() {
   try {
     const res = await fetch('/api/reviews/all?limit=60');
     const json = await res.json();
-    list.innerHTML = '';
-    indicators.innerHTML = '';
+    list.innerHTML = ''; indicators.innerHTML = '';
     if (!json.data || json.data.length === 0) {
       list.innerHTML = '<div class="carousel-item active"><div class="row g-3 justify-content-center"><div class="col-12 text-center py-5 text-secondary">{{ t.reviews_empty }}</div></div></div>';
       return;
     }
-    const cardsPerSlide = window.innerWidth < 768 ? 1 : (window.innerWidth < 992 ? 2 : 3);
+    const cps = window.innerWidth < 768 ? 1 : (window.innerWidth < 992 ? 2 : 3);
     const slides = [];
-    for (let i = 0; i < json.data.length; i += cardsPerSlide) {
-      slides.push(json.data.slice(i, i + cardsPerSlide));
-    }
+    for (let i = 0; i < json.data.length; i += cps) slides.push(json.data.slice(i, i + cps));
     slides.forEach((slide, idx) => {
       const isActive = idx === 0;
       const indicator = document.createElement('button');
-      indicator.type = 'button';
-      indicator.setAttribute('data-bs-target', '#reviews-carousel');
-      indicator.setAttribute('data-bs-slide-to', idx);
-      if (isActive) indicator.classList.add('active');
-      indicator.setAttribute('aria-label', `Slide ${idx + 1}`);
-      indicators.appendChild(indicator);
-
-      const item = document.createElement('div');
-      item.className = `carousel-item${isActive ? ' active' : ''}`;
-      const row = document.createElement('div');
-      row.className = 'row g-3 justify-content-center';
+      indicator.type = 'button'; indicator.setAttribute('data-bs-target', '#reviews-carousel'); indicator.setAttribute('data-bs-slide-to', idx);
+      if (isActive) indicator.classList.add('active'); indicator.setAttribute('aria-label', `Slide ${idx + 1}`); indicators.appendChild(indicator);
+      const item = document.createElement('div'); item.className = `carousel-item${isActive ? ' active' : ''}`;
+      const row = document.createElement('div'); row.className = 'row g-3 justify-content-center';
       slide.forEach(r => {
         const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
-        const col = document.createElement('div');
-        col.className = 'col-md-6 col-lg-4';
-        col.innerHTML = `
-          <div class="review-card card h-100 border-0 shadow-sm" style="border-radius:16px;">
-            <div class="card-body p-4">
-              <div class="text-warning mb-2" style="font-size:1.1rem;letter-spacing:2px;">${stars}</div>
-              <p class="card-text text-secondary mb-3" style="line-height:1.7;font-size:0.95rem;">"${r.content}"</p>
-              <div class="d-flex align-items-center">
-                <div class="rounded-circle bg-primary-50 text-primary d-flex align-items-center justify-content-center ms-2" style="width:40px;height:40px;font-size:0.9rem;font-weight:700;flex-shrink:0;">${r.reviewer_name.charAt(0)}</div>
-                <div>
-                  <small class="fw-bold d-block" style="font-size:0.85rem;">${r.reviewer_name}</small>
-                  <small class="text-secondary" style="font-size:0.75rem;">${REVIEW_LABELS[r.reviewer_role] || r.reviewer_role}</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
+        const col = document.createElement('div'); col.className = 'col-md-6 col-lg-4';
+        col.innerHTML = `<div class="review-card card h-100 border-0 shadow-sm" style="border-radius:12px;"><div class="card-body p-3"><div class="text-warning mb-2" style="font-size:1rem;letter-spacing:1px;">${stars}</div><p class="card-text text-secondary mb-2" style="line-height:1.6;font-size:0.9rem;">"${r.content}"</p><div class="d-flex align-items-center"><div class="rounded-circle bg-primary-50 text-primary d-flex align-items-center justify-content-center ms-2" style="width:36px;height:36px;font-size:0.85rem;font-weight:700;flex-shrink:0;">${r.reviewer_name.charAt(0)}</div><div><small class="fw-bold d-block" style="font-size:0.8rem;">${r.reviewer_name}</small><small class="text-secondary" style="font-size:0.7rem;">${REVIEW_LABELS[r.reviewer_role] || r.reviewer_role}</small></div></div></div></div>`;
         row.appendChild(col);
       });
-      item.appendChild(row);
-      list.appendChild(item);
+      item.appendChild(row); list.appendChild(item);
     });
     const carouselEl = document.getElementById('reviews-carousel');
     const bsCarousel = bootstrap.Carousel.getInstance(carouselEl);
     if (bsCarousel) bsCarousel.dispose();
     new bootstrap.Carousel(carouselEl, { ride: 'carousel', interval: 4000 });
-  } catch(e) {
-    list.innerHTML = '<div class="carousel-item active"><div class="row g-3 justify-content-center"><div class="col-12 text-center py-5 text-danger">{{ t.reviews_error }}</div></div></div>';
-  }
+  } catch(e) { list.innerHTML = '<div class="carousel-item active"><div class="row g-3 justify-content-center"><div class="col-12 text-center py-5 text-danger">{{ t.reviews_error }}</div></div></div>'; }
 }
 document.addEventListener('DOMContentLoaded', loadReviews);
 </script>
