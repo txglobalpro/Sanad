@@ -184,8 +184,24 @@ async def forgot_password_page(request: Request):
 @app.post("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_post(request: Request, email: str = Form(...)):
     try:
-        supabase.auth.reset_password_email(email)
-        return render_template(request, "auth/forgot_password.html", success="تم إرسال رابط إعادة تعيين كلمة السر إلى بريدك الإلكتروني")
+        async with httpx.AsyncClient(timeout=15) as client:
+            users_resp = await client.get(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
+                params={"filter[email]": email}
+            )
+            if users_resp.status_code >= 400 or not users_resp.json().get("users"):
+                return render_template(request, "auth/forgot_password.html", error="البريد الإلكتروني غير موجود")
+            user_id = users_resp.json()["users"][0]["id"]
+
+            new_password = "Sanad@" + str(uuid.uuid4())[:8]
+            await client.put(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users/{user_id}",
+                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}", "Content-Type": "application/json"},
+                json={"password": new_password}
+            )
+
+        return render_template(request, "auth/forgot_password.html", success=f"تم إعادة تعيين كلمة السر. كلمة السر الجديدة: {new_password}")
     except Exception as e:
         print(f"FORGOT PASSWORD ERROR: {e}")
         return render_template(request, "auth/forgot_password.html", error="حدث خطأ، حاول مرة أخرى")
