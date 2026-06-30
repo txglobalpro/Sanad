@@ -152,7 +152,16 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
         role = "admin" if user_email == "admin@sanad.com" else (profile["type"] if profile else None)
 
         if not role:
-            return render_template(request, "auth/login.html", error="هذا الحساب ليس لديه صلاحية دخول. الرجاء التواصل مع الدعم.", email=email)
+            # Auto-create missing profile
+            supabase_admin.table("workers").insert({
+                "user_id": user_id, "email": user_email,
+                "first_name": "", "last_name": "",
+                "phone": "", "gender": "", "nationality": "سوري", "city": "",
+                "is_approved": True
+            }).execute()
+            supabase_admin.table("wallets").insert({"user_id": user_id, "balance": 0}).execute()
+            profile = await get_user_profile(user_id)
+            role = profile["type"] if profile else "worker"
 
         first_name = profile["data"].get("first_name", "") if (profile and profile.get("data")) else ""
         last_name = profile["data"].get("last_name", "") if (profile and profile.get("data")) else ""
@@ -258,7 +267,15 @@ async def login(data: UserLogin):
         role = "admin" if email == "admin@sanad.com" else (profile["type"] if profile else None)
 
         if not role:
-            return JSONResponse({"success": False, "message": "هذا الحساب ليس لديه صلاحية دخول"}, status_code=403)
+            supabase_admin.table("workers").insert({
+                "user_id": user_id, "email": email,
+                "first_name": "", "last_name": "",
+                "phone": "", "gender": "", "nationality": "سوري", "city": "",
+                "is_approved": True
+            }).execute()
+            supabase_admin.table("wallets").insert({"user_id": user_id, "balance": 0}).execute()
+            profile = await get_user_profile(user_id)
+            role = profile["type"] if profile else "worker"
 
         first_name = profile["data"].get("first_name", "") if (profile and profile.get("data")) else ""
         last_name = profile["data"].get("last_name", "") if (profile and profile.get("data")) else ""
