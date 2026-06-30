@@ -152,14 +152,16 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
         role = "admin" if user_email == "admin@sanad.com" else (profile["type"] if profile else None)
 
         if not role:
-            # Auto-create missing profile
-            supabase_admin.table("workers").insert({
-                "user_id": user_id, "email": user_email,
-                "first_name": "", "last_name": "",
-                "phone": "", "gender": "", "nationality": "سوري", "city": "",
-                "is_approved": True
-            }).execute()
-            supabase_admin.table("wallets").insert({"user_id": user_id, "balance": 0}).execute()
+            try:
+                supabase_admin.table("workers").upsert({
+                    "user_id": user_id, "email": user_email,
+                    "first_name": "", "last_name": "",
+                    "phone": "", "gender": "", "nationality": "سوري", "city": "",
+                    "is_approved": True
+                }).execute()
+                supabase_admin.table("wallets").upsert({"user_id": user_id, "balance": 0}).execute()
+            except Exception as e2:
+                print(f"AUTO-CREATE ERROR: {e2}")
             profile = await get_user_profile(user_id)
             role = profile["type"] if profile else "worker"
 
@@ -174,6 +176,19 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
     except Exception as e:
         print(f"LOGIN ERROR: {e}")
         return render_template(request, "auth/login.html", error="حدث خطأ في الاتصال، حاول مرة أخرى", email=email)
+
+@app.get("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_page(request: Request):
+    return render_template(request, "auth/forgot_password.html")
+
+@app.post("/forgot-password", response_class=HTMLResponse)
+async def forgot_password_post(request: Request, email: str = Form(...)):
+    try:
+        supabase.auth.reset_password_email(email)
+        return render_template(request, "auth/forgot_password.html", success="تم إرسال رابط إعادة تعيين كلمة السر إلى بريدك الإلكتروني")
+    except Exception as e:
+        print(f"FORGOT PASSWORD ERROR: {e}")
+        return render_template(request, "auth/forgot_password.html", error="حدث خطأ، حاول مرة أخرى")
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
@@ -268,13 +283,16 @@ async def login(data: UserLogin):
         role = "admin" if email == "admin@sanad.com" else (profile["type"] if profile else None)
 
         if not role:
-            supabase_admin.table("workers").insert({
-                "user_id": user_id, "email": email,
-                "first_name": "", "last_name": "",
-                "phone": "", "gender": "", "nationality": "سوري", "city": "",
-                "is_approved": True
-            }).execute()
-            supabase_admin.table("wallets").insert({"user_id": user_id, "balance": 0}).execute()
+            try:
+                supabase_admin.table("workers").upsert({
+                    "user_id": user_id, "email": email,
+                    "first_name": "", "last_name": "",
+                    "phone": "", "gender": "", "nationality": "سوري", "city": "",
+                    "is_approved": True
+                }).execute()
+                supabase_admin.table("wallets").upsert({"user_id": user_id, "balance": 0}).execute()
+            except Exception as e2:
+                print(f"API AUTO-CREATE ERROR: {e2}")
             profile = await get_user_profile(user_id)
             role = profile["type"] if profile else "worker"
 
