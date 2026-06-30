@@ -184,27 +184,39 @@ async def forgot_password_page(request: Request):
 @app.post("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_post(request: Request, email: str = Form(...)):
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            users_resp = await client.get(
-                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"},
-                params={"filter[email]": email}
-            )
-            if users_resp.status_code >= 400 or not users_resp.json().get("users"):
-                return render_template(request, "auth/forgot_password.html", error="البريد الإلكتروني غير موجود")
-            user_id = users_resp.json()["users"][0]["id"]
-
-            new_password = "Sanad@" + str(uuid.uuid4())[:8]
-            await client.put(
-                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users/{user_id}",
-                headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}", "Content-Type": "application/json"},
-                json={"password": new_password}
-            )
-
-        return render_template(request, "auth/forgot_password.html", success=f"تم إعادة تعيين كلمة السر. كلمة السر الجديدة: {new_password}")
+        supabase.auth.reset_password_email(email, {"redirect_to": "https://sanad-job.onrender.com/update-password"})
+        return render_template(request, "auth/forgot_password.html", success="تم إرسال رابط إعادة تعيين كلمة السر إلى بريدك الإلكتروني")
     except Exception as e:
         print(f"FORGOT PASSWORD ERROR: {e}")
         return render_template(request, "auth/forgot_password.html", error="حدث خطأ، حاول مرة أخرى")
+
+@app.get("/update-password", response_class=HTMLResponse)
+async def update_password_page(request: Request):
+    return render_template(request, "auth/update_password.html")
+
+@app.post("/api/auth/update-password")
+async def update_password_api(data: dict):
+    password = data.get("password", "")
+    if len(password) < 6:
+        return JSONResponse({"success": False, "message": "كلمة السر يجب أن تكون 6 أحرف على الأقل"}, status_code=400)
+    try:
+        supabase.auth.update_user({"password": password})
+        return JSONResponse({"success": True, "message": "تم تغيير كلمة السر بنجاح"})
+    except Exception as e:
+        print(f"UPDATE PASSWORD ERROR: {e}")
+        return JSONResponse({"success": False, "message": "حدث خطأ في تغيير كلمة السر"}, status_code=400)
+
+@app.post("/api/auth/set-session")
+async def set_session_api(data: dict):
+    token = data.get("access_token", "")
+    if not token:
+        return JSONResponse({"success": False, "message": "الرمز غير صالح"}, status_code=401)
+    try:
+        supabase.auth.set_session(token, "")
+        return JSONResponse({"success": True})
+    except Exception as e:
+        print(f"SET SESSION ERROR: {e}")
+        return JSONResponse({"success": False, "message": "الرابط غير صالح أو منتهي"}, status_code=401)
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
