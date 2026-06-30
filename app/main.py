@@ -188,30 +188,15 @@ async def forgot_password_post(request: Request, email: str = Form(...), new_pas
         if len(new_password) < 6:
             return render_template(request, "auth/forgot_password.html", error="كلمة السر يجب أن تكون 6 أحرف على الأقل")
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
-                # List users filtered by email via GoTrue Admin API
-                resp = await client.get(
-                    f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users",
-                    headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"}
-                )
-                if resp.status_code >= 400:
-                    return render_template(request, "auth/forgot_password.html", error="تعذر البحث عن المستخدم", email=email)
-                users = resp.json().get("users", [])
-                user = next((u for u in users if u.get("email") == email), None)
-                if not user:
-                    return render_template(request, "auth/forgot_password.html", error="البريد الإلكتروني غير مسجل", email=email)
-                uid = user["id"]
-                update_resp = await client.put(
-                    f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/admin/users/{uid}",
-                    headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}", "Content-Type": "application/json"},
-                    json={"password": new_password, "email_confirm": True}
-                )
-                if update_resp.status_code >= 400:
-                    return render_template(request, "auth/forgot_password.html", error="تعذر تغيير كلمة السر، حاول مرة أخرى")
-                return render_template(request, "auth/forgot_password.html", success="تم تغيير كلمة السر بنجاح! يمكنك الآن تسجيل الدخول")
+            users = supabase_admin.auth.admin.list_users()
+            user = next((u for u in users if u.email == email), None)
+            if not user:
+                return render_template(request, "auth/forgot_password.html", error="البريد الإلكتروني غير مسجل", email=email)
+            supabase_admin.auth.admin.update_user_by_id(user.id, {"password": new_password})
+            return render_template(request, "auth/forgot_password.html", success="تم تغيير كلمة السر بنجاح! يمكنك الآن تسجيل الدخول")
         except Exception as e:
             print(f"DIRECT RESET ERROR: {e}")
-            return render_template(request, "auth/forgot_password.html", error="حدث خطأ في الاتصال، حاول مرة أخرى")
+            return render_template(request, "auth/forgot_password.html", error="حدث خطأ، حاول مرة أخرى")
 
     # Email-based reset
     try:
