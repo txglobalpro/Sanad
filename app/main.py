@@ -184,7 +184,12 @@ async def forgot_password_page(request: Request):
 @app.post("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_post(request: Request, email: str = Form(...)):
     try:
-        supabase.auth.reset_password_email(email, {"redirect_to": "https://sanad-job.onrender.com/update-password"})
+        async with httpx.AsyncClient(timeout=15) as client:
+            await client.post(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/recover",
+                headers={"apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json"},
+                json={"email": email, "redirect_to": "https://sanad-job.onrender.com/update-password"}
+            )
         return render_template(request, "auth/forgot_password.html", success="تم إرسال رابط إعادة تعيين كلمة السر إلى بريدك الإلكتروني")
     except Exception as e:
         print(f"FORGOT PASSWORD ERROR: {e}")
@@ -194,17 +199,29 @@ async def forgot_password_post(request: Request, email: str = Form(...)):
 async def update_password_page(request: Request):
     return render_template(request, "auth/update_password.html")
 
-@app.post("/api/auth/update-password")
-async def update_password_api(data: dict):
+@app.post("/api/auth/reset-password-with-token")
+async def reset_password_with_token(data: dict):
+    token = data.get("access_token", "")
     password = data.get("password", "")
-    if len(password) < 6:
-        return JSONResponse({"success": False, "message": "كلمة السر يجب أن تكون 6 أحرف على الأقل"}, status_code=400)
+    if not token or len(password) < 6:
+        return JSONResponse({"success": False, "message": "بيانات غير صالحة"}, status_code=400)
     try:
-        supabase.auth.update_user({"password": password})
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.put(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/user",
+                headers={
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"
+                },
+                json={"password": password}
+            )
+            if resp.status_code >= 400:
+                return JSONResponse({"success": False, "message": "الرابط منتهي الصلاحية"}, status_code=401)
         return JSONResponse({"success": True, "message": "تم تغيير كلمة السر بنجاح"})
     except Exception as e:
-        print(f"UPDATE PASSWORD ERROR: {e}")
-        return JSONResponse({"success": False, "message": "حدث خطأ في تغيير كلمة السر"}, status_code=400)
+        print(f"RESET PASSWORD ERROR: {e}")
+        return JSONResponse({"success": False, "message": "حدث خطأ، حاول مرة أخرى"}, status_code=400)
 
 @app.post("/api/auth/set-session")
 async def set_session_api(data: dict):
