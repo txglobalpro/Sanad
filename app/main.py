@@ -185,15 +185,18 @@ async def forgot_password_page(request: Request):
 async def forgot_password_post(request: Request, email: str = Form(...)):
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            await client.post(
-                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/recover",
+            resp = await client.post(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/recover?redirect_to=https://sanad-job.onrender.com/update-password",
                 headers={"apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json"},
-                json={"email": email, "redirect_to": "https://sanad-job.onrender.com/update-password"}
+                json={"email": email}
             )
+        print(f"FORGOT PASSWORD RESPONSE: {resp.status_code} {resp.text[:200]}")
+        if resp.status_code >= 400:
+            return render_template(request, "auth/forgot_password.html", error="تعذر إرسال رابط إعادة التعيين، حاول مرة أخرى")
         return render_template(request, "auth/forgot_password.html", success="تم إرسال رابط إعادة تعيين كلمة السر إلى بريدك الإلكتروني")
     except Exception as e:
         print(f"FORGOT PASSWORD ERROR: {e}")
-        return render_template(request, "auth/forgot_password.html", error="حدث خطأ، حاول مرة أخرى")
+        return render_template(request, "auth/forgot_password.html", error="حدث خطأ في الاتصال، حاول مرة أخرى")
 
 @app.get("/update-password", response_class=HTMLResponse)
 async def update_password_page(request: Request):
