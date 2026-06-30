@@ -23,6 +23,7 @@ AR = {
     "hero_subtitle": "المنصة السورية الأولى للربط الموثوق بين العمال وأصحاب العمل في جميع المحافظات",
     "hero_start": "ابدأ الآن مجاناً",
     "hero_login": "تسجيل دخول",
+    "go_to_dashboard": "لوحة التحكم",
 
     # Stats
     "stat_workers": "عامل مسجل",
@@ -578,6 +579,7 @@ EN = {
     "hero_subtitle": "The first Syrian platform for trusted connection between workers and employers in all governorates",
     "hero_start": "Get Started Free",
     "hero_login": "Login",
+    "go_to_dashboard": "Dashboard",
 
     # Stats
     "stat_workers": "Workers",
