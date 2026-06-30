@@ -519,7 +519,7 @@ async def reject_worker(request: Request, worker_id: str):
     if worker.data:
         uid = worker.data[0]["user_id"]
         supabase_admin.table("applications").delete().eq("worker_id", uid).execute()
-        supabase_admin.table("saved_jobs").delete().eq("user_id", uid).execute()
+        supabase_admin.table("saved_jobs").delete().eq("worker_id", worker_id).execute()
         supabase_admin.table("wallets").delete().eq("user_id", uid).execute()
         supabase_admin.table("notifications").delete().eq("user_id", uid).execute()
         supabase_admin.table("workers").delete().eq("id", worker_id).execute()
@@ -1068,7 +1068,10 @@ async def admin_delete_client(request: Request, user_id: str):
             supabase_admin.table("applications").delete().eq("job_id", jid).execute()
         supabase_admin.table("jobs").delete().eq("employer_id", user_id).execute()
         supabase_admin.table("applications").delete().eq("worker_id", user_id).execute()
-        supabase_admin.table("saved_jobs").delete().eq("user_id", user_id).execute()
+        workers_del = supabase_admin.table("workers").select("id").eq("user_id", user_id).execute()
+        if workers_del.data:
+            for w in workers_del.data:
+                supabase_admin.table("saved_jobs").delete().eq("worker_id", w["id"]).execute()
         supabase_admin.table("workers").delete().eq("user_id", user_id).execute()
         supabase_admin.table("employers").delete().eq("user_id", user_id).execute()
         supabase_admin.table("wallets").delete().eq("user_id", user_id).execute()
