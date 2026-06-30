@@ -155,7 +155,7 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
             try:
                 supabase_admin.table("workers").upsert({
                     "user_id": user_id, "email": user_email,
-                    "first_name": "", "last_name": "",
+                    "first_name": user_email.split("@")[0], "last_name": "",
                     "phone": "", "gender": "", "nationality": "سوري", "city": "",
                     "is_approved": True
                 }).execute()
@@ -261,12 +261,14 @@ async def register_page(request: Request):
 @app.get("/about", response_class=HTMLResponse)
 async def about_page(request: Request):
     user = await get_current_user(request)
-    return render_template(request, "about.html", user=user)
+    wallet = await get_wallet(user["sub"]) if user else None
+    return render_template(request, "about.html", user=user, wallet=wallet)
 
 @app.get("/contact", response_class=HTMLResponse)
 async def contact_page(request: Request):
     user = await get_current_user(request)
-    return render_template(request, "contact.html", user=user)
+    wallet = await get_wallet(user["sub"]) if user else None
+    return render_template(request, "contact.html", user=user, wallet=wallet)
 
 @app.post("/api/contact")
 async def contact_form(data: ContactForm):

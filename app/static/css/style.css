@@ -180,8 +180,6 @@ a:hover { color: var(--primary-dark); }
 [dir="rtl"] .user-dropdown-panel { left: 0; right: auto; }
 [dir="ltr"] .user-dropdown-panel { right: 0; left: auto; }
 
-}
-
 /* ===== Buttons ===== */
 .btn {
   border-radius: var(--radius);
