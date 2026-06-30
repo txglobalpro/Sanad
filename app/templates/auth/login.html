@@ -51,21 +51,24 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const infoMsg = document.getElementById('loginInfoMsg');
   errDiv.classList.add('d-none');
   infoDiv.classList.add('d-none');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.login_loading }}';
   const controller = new AbortController();
-  const timeoutId = setTimeout(function() {
+  const abortTimeout = setTimeout(() => controller.abort(), 55000);
+  const infoTimeout = setTimeout(function() {
     infoDiv.classList.remove('d-none');
     infoMsg.textContent = '{{ t.login_starting }}';
   }, 3000);
   try {
     const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data), signal: controller.signal });
-    clearTimeout(timeoutId);
+    clearTimeout(abortTimeout);
+    clearTimeout(infoTimeout);
     infoDiv.classList.add('d-none');
     const json = await res.json();
     if (json.success) { window.location.href = json.redirect; }
     else { errDiv.textContent = json.message; errDiv.classList.remove('d-none'); }
   } catch(e) {
-    clearTimeout(timeoutId);
+    clearTimeout(abortTimeout);
+    clearTimeout(infoTimeout);
     infoDiv.classList.add('d-none');
     if (e.name === 'AbortError') {
       errDiv.textContent = '{{ t.login_timeout }}'; errDiv.classList.remove('d-none');
