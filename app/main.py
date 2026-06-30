@@ -149,7 +149,10 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
             user_email = user_data.get("user", {}).get("email", email)
 
         profile = await get_user_profile(user_id)
-        role = "admin" if user_email == "admin@sanad.com" else (profile["type"] if profile else "unknown")
+        role = "admin" if user_email == "admin@sanad.com" else (profile["type"] if profile else None)
+
+        if not role:
+            return render_template(request, "auth/login.html", error="هذا الحساب ليس لديه صلاحية دخول. الرجاء التواصل مع الدعم.", email=email)
 
         first_name = profile["data"].get("first_name", "") if (profile and profile.get("data")) else ""
         last_name = profile["data"].get("last_name", "") if (profile and profile.get("data")) else ""
@@ -252,7 +255,10 @@ async def login(data: UserLogin):
             email = user_data.get("user", {}).get("email", data.email)
 
         profile = await get_user_profile(user_id)
-        role = "admin" if email == "admin@sanad.com" else (profile["type"] if profile else "unknown")
+        role = "admin" if email == "admin@sanad.com" else (profile["type"] if profile else None)
+
+        if not role:
+            return JSONResponse({"success": False, "message": "هذا الحساب ليس لديه صلاحية دخول"}, status_code=403)
 
         first_name = profile["data"].get("first_name", "") if (profile and profile.get("data")) else ""
         last_name = profile["data"].get("last_name", "") if (profile and profile.get("data")) else ""
