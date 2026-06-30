@@ -207,21 +207,35 @@ async def register(data: UserRegister):
 @app.post("/api/auth/login")
 async def login(data: UserLogin):
     try:
-        auth_result = supabase.auth.sign_in_with_password({"email": data.email, "password": data.password})
-        user = auth_result.user
+        async with httpx.AsyncClient(timeout=15) as client:
+            auth_resp = await client.post(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/token?grant_type=password",
+                headers={
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Content-Type": "application/json"
+                },
+                json={"email": data.email, "password": data.password}
+            )
+            if auth_resp.status_code >= 400:
+                return JSONResponse({"success": False, "message": "البريد الإلكتروني أو كلمة المرور غير صحيحة"}, status_code=401)
+            user_data = auth_resp.json()
+            user_id = user_data.get("user", {}).get("id", "")
+            email = user_data.get("user", {}).get("email", data.email)
 
-        profile = await get_user_profile(user.id)
-        role = "admin" if user.email == "admin@sanad.com" else (profile["type"] if profile else "unknown")
+        profile = await get_user_profile(user_id)
+        role = "admin" if email == "admin@sanad.com" else (profile["type"] if profile else "unknown")
 
         first_name = profile["data"].get("first_name", "") if (profile and profile.get("data")) else ""
         last_name = profile["data"].get("last_name", "") if (profile and profile.get("data")) else ""
 
-        token = create_token({"sub": user.id, "email": user.email, "role": role, "first_name": first_name, "last_name": last_name})
+        token = create_token({"sub": user_id, "email": email, "role": role, "first_name": first_name, "last_name": last_name})
 
         response = JSONResponse({"success": True, "role": role, "redirect": "/admin/dashboard" if role == "admin" else f"/{role}/dashboard"})
         response.set_cookie(key="token", value=token, httponly=True, max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60, samesite="lax")
         return response
-    except Exception as e:
+    except httpx.TimeoutException:
+        return JSONResponse({"success": False, "message": "خطأ في الاتصال بالخادم، حاول مرة أخرى"}, status_code=502)
+    except Exception:
         return JSONResponse({"success": False, "message": "البريد الإلكتروني أو كلمة المرور غير صحيحة"}, status_code=401)
 
 @app.get("/api/auth/logout")
