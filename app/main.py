@@ -171,7 +171,8 @@ async def login_post(request: Request, email: str = Form(...), password: str = F
         response = RedirectResponse("/admin/dashboard" if role == "admin" else f"/{role}/dashboard", status_code=302)
         response.set_cookie(key="token", value=token, httponly=True, max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60, samesite="lax")
         return response
-    except Exception:
+    except Exception as e:
+        print(f"LOGIN ERROR: {e}")
         return render_template(request, "auth/login.html", error="حدث خطأ في الاتصال، حاول مرة أخرى", email=email)
 
 @app.get("/register", response_class=HTMLResponse)
