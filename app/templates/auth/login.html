@@ -11,23 +11,22 @@
       </div>
       <div class="card shadow-lg border-0 animate-fade-in-up stagger-1">
         <div class="card-body p-4">
-          <form id="loginForm">
+          {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+          {% endif %}
+          <form method="POST" action="/login">
             <div class="mb-3">
               <label class="form-label">{{ t.login_email }}</label>
-              <input type="email" name="email" class="form-control" required placeholder="{{ t.login_email }}">
+              <input type="email" name="email" class="form-control" required placeholder="{{ t.login_email }}" value="{{ email or '' }}">
             </div>
             <div class="mb-3">
               <label class="form-label">{{ t.login_password }}</label>
               <input type="password" name="password" class="form-control" required placeholder="{{ t.login_password }}">
             </div>
-            <button type="submit" class="btn btn-primary w-100 py-2" id="loginBtn">
+            <button type="submit" class="btn btn-primary w-100 py-2">
               <i class="bi bi-box-arrow-in-left ms-1"></i>{{ t.login_btn }}
             </button>
           </form>
-          <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
-          <div id="loginInfo" class="alert alert-info mt-3 d-none">
-            <i class="bi bi-hourglass-split ms-1"></i><span id="loginInfoMsg"></span>
-          </div>
           <hr class="my-4">
           <p class="text-center mb-0">
             {{ t.login_no_account }}
@@ -38,45 +37,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
-{% block extra_js %}
-<script>
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const form = e.target;
-  const data = { email: form.email.value, password: form.password.value };
-  const btn = form.querySelector('button');
-  const errDiv = document.getElementById('loginError');
-  const infoDiv = document.getElementById('loginInfo');
-  const infoMsg = document.getElementById('loginInfoMsg');
-  errDiv.classList.add('d-none');
-  infoDiv.classList.add('d-none');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.login_loading }}';
-  const controller = new AbortController();
-  const abortTimeout = setTimeout(() => controller.abort(), 55000);
-  const infoTimeout = setTimeout(function() {
-    infoDiv.classList.remove('d-none');
-    infoMsg.textContent = '{{ t.login_starting }}';
-  }, 3000);
-  try {
-    const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data), signal: controller.signal });
-    clearTimeout(abortTimeout);
-    clearTimeout(infoTimeout);
-    infoDiv.classList.add('d-none');
-    const json = await res.json();
-    if (json.success) { window.location.href = json.redirect; }
-    else { errDiv.textContent = json.message; errDiv.classList.remove('d-none'); }
-  } catch(e) {
-    clearTimeout(abortTimeout);
-    clearTimeout(infoTimeout);
-    infoDiv.classList.add('d-none');
-    if (e.name === 'AbortError') {
-      errDiv.textContent = '{{ t.login_timeout }}'; errDiv.classList.remove('d-none');
-    } else {
-      errDiv.textContent = '{{ t.login_error_connection }}'; errDiv.classList.remove('d-none');
-    }
-  }
-  finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-left ms-1"></i>{{ t.login_btn }}'; }
-});
-</script>
 {% endblock %}

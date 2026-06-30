@@ -133,6 +133,35 @@ async def index(request: Request):
 async def login_page(request: Request):
     return render_template(request, "auth/login.html")
 
+@app.post("/login", response_class=HTMLResponse)
+async def login_post(request: Request, email: str = Form(...), password: str = Form(...)):
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            auth_resp = await client.post(
+                f"https://{SUPABASE_PROJECT_REF}.supabase.co/auth/v1/token?grant_type=password",
+                headers={"apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json"},
+                json={"email": email, "password": password}
+            )
+            if auth_resp.status_code >= 400:
+                return render_template(request, "auth/login.html", error="البريد الإلكتروني أو كلمة المرور غير صحيحة", email=email)
+            user_data = auth_resp.json()
+            user_id = user_data.get("user", {}).get("id", "")
+            user_email = user_data.get("user", {}).get("email", email)
+
+        profile = await get_user_profile(user_id)
+        role = "admin" if user_email == "admin@sanad.com" else (profile["type"] if profile else "unknown")
+
+        first_name = profile["data"].get("first_name", "") if (profile and profile.get("data")) else ""
+        last_name = profile["data"].get("last_name", "") if (profile and profile.get("data")) else ""
+
+        token = create_token({"sub": user_id, "email": user_email, "role": role, "first_name": first_name, "last_name": last_name})
+
+        response = RedirectResponse("/admin/dashboard" if role == "admin" else f"/{role}/dashboard", status_code=302)
+        response.set_cookie(key="token", value=token, httponly=True, max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60, samesite="lax")
+        return response
+    except Exception:
+        return render_template(request, "auth/login.html", error="حدث خطأ في الاتصال، حاول مرة أخرى", email=email)
+
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
     return render_template(request, "auth/register.html")
@@ -233,8 +262,6 @@ async def login(data: UserLogin):
         response = JSONResponse({"success": True, "role": role, "redirect": "/admin/dashboard" if role == "admin" else f"/{role}/dashboard"})
         response.set_cookie(key="token", value=token, httponly=True, max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60, samesite="lax")
         return response
-    except httpx.TimeoutException:
-        return JSONResponse({"success": False, "message": "خطأ في الاتصال بالخادم، حاول مرة أخرى"}, status_code=502)
     except Exception:
         return JSONResponse({"success": False, "message": "البريد الإلكتروني أو كلمة المرور غير صحيحة"}, status_code=401)
 
