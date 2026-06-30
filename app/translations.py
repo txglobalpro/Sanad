@@ -83,6 +83,8 @@ AR = {
     "login_register_link": "إنشاء حساب جديد",
     "login_loading": "جاري تسجيل الدخول...",
     "login_error_connection": "حدث خطأ في الاتصال",
+    "login_starting": "الخادم يبدأ التشغيل، الرجاء الانتظار... قد يستغرق ذلك حتى 30 ثانية",
+    "login_timeout": "استغرق الاتصال وقتاً طويلاً. الخادم في طور البدء، حاول مرة أخرى.",
 
     "register_title": "انضم إلى Sanad",
     "register_subtitle": "أنشئ حسابك مجاناً وابدأ رحلتك",
@@ -636,6 +638,8 @@ EN = {
     "login_register_link": "Create New Account",
     "login_loading": "Logging in...",
     "login_error_connection": "Connection error occurred",
+    "login_starting": "Server is starting up, please wait... This may take up to 30 seconds",
+    "login_timeout": "Connection timed out. The server is waking up, please try again.",
 
     "register_title": "Join Sanad",
     "register_subtitle": "Create your free account and start your journey",

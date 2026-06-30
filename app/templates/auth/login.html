@@ -20,11 +20,14 @@
               <label class="form-label">{{ t.login_password }}</label>
               <input type="password" name="password" class="form-control" required placeholder="{{ t.login_password }}">
             </div>
-            <button type="submit" class="btn btn-primary w-100 py-2">
+            <button type="submit" class="btn btn-primary w-100 py-2" id="loginBtn">
               <i class="bi bi-box-arrow-in-left ms-1"></i>{{ t.login_btn }}
             </button>
           </form>
           <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
+          <div id="loginInfo" class="alert alert-info mt-3 d-none">
+            <i class="bi bi-hourglass-split ms-1"></i><span id="loginInfoMsg"></span>
+          </div>
           <hr class="my-4">
           <p class="text-center mb-0">
             {{ t.login_no_account }}
@@ -43,13 +46,33 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const form = e.target;
   const data = { email: form.email.value, password: form.password.value };
   const btn = form.querySelector('button');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>{{ t.login_loading }}';
+  const errDiv = document.getElementById('loginError');
+  const infoDiv = document.getElementById('loginInfo');
+  const infoMsg = document.getElementById('loginInfoMsg');
+  errDiv.classList.add('d-none');
+  infoDiv.classList.add('d-none');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm ms-1"></span>';
+  const controller = new AbortController();
+  const timeoutId = setTimeout(function() {
+    infoDiv.classList.remove('d-none');
+    infoMsg.textContent = '{{ t.login_starting }}';
+  }, 3000);
   try {
-    const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+    const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data), signal: controller.signal });
+    clearTimeout(timeoutId);
+    infoDiv.classList.add('d-none');
     const json = await res.json();
     if (json.success) { window.location.href = json.redirect; }
-    else { const err = document.getElementById('loginError'); err.textContent = json.message; err.classList.remove('d-none'); }
-  } catch(e) { alert('{{ t.login_error_connection }}'); }
+    else { errDiv.textContent = json.message; errDiv.classList.remove('d-none'); }
+  } catch(e) {
+    clearTimeout(timeoutId);
+    infoDiv.classList.add('d-none');
+    if (e.name === 'AbortError') {
+      errDiv.textContent = '{{ t.login_timeout }}'; errDiv.classList.remove('d-none');
+    } else {
+      errDiv.textContent = '{{ t.login_error_connection }}'; errDiv.classList.remove('d-none');
+    }
+  }
   finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-left ms-1"></i>{{ t.login_btn }}'; }
 });
 </script>
