@@ -58,9 +58,11 @@ async def sitemap():
   <url><loc>https://sanad-job.onrender.com/register</loc><priority>0.8</priority></url>
 </urlset>""", media_type="application/xml")
 
+DEPLOY_VERSION = "v2-" + datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "message": "Sanad is running"}
+    return {"status": "ok", "message": "Sanad is running", "version": DEPLOY_VERSION}
 
 CITIES = ["دمشق", "حلب", "حمص", "حماة", "اللاذقية", "طرطوس", "إدلب", "دير الزور", "الرقة", "الحسكة", "درعا", "السويداء", "القنيطرة", "ريف دمشق"]
 WORK_TYPES = ["بناء وصيانة", "نظافة وخدمات منزلية", "توصيل وشحن", "سائق", "كهرباء", "سباكة", "نجارة", "حدادة و لحام", "دهان و ديكور", "تبريد و تكييف", "حدائق و زراعة", "حرف يدوية", "حراسة و أمن", "أخرى"]
@@ -458,8 +460,9 @@ async def worker_jobs(request: Request, q: str = "", work_type: str = "", city: 
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "worker": return RedirectResponse("/", status_code=302)
     worker = profile["data"]
+    wallet = await get_wallet(user["sub"])
     if not worker.get("is_approved"):
-        return render_template(request, "worker/pending.html", user=user)
+        return render_template(request, "worker/pending.html", user=user, wallet=wallet)
     query = supabase.table("jobs").select("*").eq("status", "open")
     if city:
         query = query.eq("city", city)
@@ -488,7 +491,7 @@ async def worker_jobs(request: Request, q: str = "", work_type: str = "", city: 
     else:
         # Featured first, then by date
         jobs.sort(key=lambda j: (0 if j.get("featured") else 1, -(j.get("created_at") or "")))
-    return render_template(request, "worker/jobs.html", user=user, jobs=jobs, worker=worker, work_types=WORK_TYPES, cities=CITIES, q=q, sel_work_type=work_type, sel_city=city, pay_min=pay_min, pay_max=pay_max, sort=sort, employer_id=employer_id)
+    return render_template(request, "worker/jobs.html", user=user, jobs=jobs, worker=worker, wallet=wallet, work_types=WORK_TYPES, cities=CITIES, q=q, sel_work_type=work_type, sel_city=city, pay_min=pay_min, pay_max=pay_max, sort=sort, employer_id=employer_id)
 
 @app.get("/worker/jobs/{job_id}", response_class=HTMLResponse)
 async def job_details(request: Request, job_id: str):
@@ -497,7 +500,8 @@ async def job_details(request: Request, job_id: str):
     job = supabase.table("jobs").select("*").eq("id", job_id).single().execute()
     if not job.data: return RedirectResponse("/worker/jobs", status_code=302)
     employer = supabase.table("employers").select("*").eq("id", job.data["employer_id"]).single().execute()
-    return render_template(request, "worker/job_detail.html", user=user, job=job.data, employer=employer.data if employer.data else None)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "worker/job_detail.html", user=user, job=job.data, employer=employer.data if employer.data else None, wallet=wallet)
 
 @app.post("/api/worker/save-job/{job_id}")
 async def save_job(request: Request, job_id: str):
@@ -522,10 +526,11 @@ async def saved_jobs_page(request: Request):
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "worker": return RedirectResponse("/", status_code=302)
     worker = profile["data"]
+    wallet = await get_wallet(user["sub"])
     if not worker.get("is_approved"):
-        return render_template(request, "worker/pending.html", user=user)
+        return render_template(request, "worker/pending.html", user=user, wallet=wallet)
     saved = supabase_admin.table("saved_jobs").select("*, jobs(*)").eq("worker_id", worker["id"]).order("created_at", desc=True).execute()
-    return render_template(request, "worker/saved_jobs.html", user=user, saved_jobs=saved.data, worker=worker)
+    return render_template(request, "worker/saved_jobs.html", user=user, saved_jobs=saved.data, worker=worker, wallet=wallet)
 
 @app.get("/worker/applications", response_class=HTMLResponse)
 async def my_applications(request: Request):
@@ -534,7 +539,8 @@ async def my_applications(request: Request):
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "worker": return RedirectResponse("/", status_code=302)
     apps = supabase.table("applications").select("*, jobs(*)").eq("worker_id", profile["data"]["id"]).order("created_at", desc=True).execute()
-    return render_template(request, "worker/applications.html", user=user, applications=apps.data)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "worker/applications.html", user=user, applications=apps.data, wallet=wallet)
 
 # ==================== Employer Routes ====================
 
@@ -554,7 +560,8 @@ async def post_job_page(request: Request):
     if not user: return RedirectResponse("/login", status_code=302)
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
-    return render_template(request, "employer/post_job.html", user=user, cities=CITIES, work_types=WORK_TYPES)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "employer/post_job.html", user=user, cities=CITIES, work_types=WORK_TYPES, wallet=wallet)
 
 @app.post("/api/employer/upload-image")
 async def upload_job_image(request: Request, file: UploadFile = File(...)):
@@ -612,7 +619,8 @@ async def edit_job_page(request: Request, job_id: str):
     if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
     job = supabase.table("jobs").select("*").eq("id", job_id).eq("employer_id", profile["data"]["id"]).single().execute()
     if not job.data: return RedirectResponse("/employer/dashboard", status_code=302)
-    return render_template(request, "employer/post_job.html", user=user, job=job.data, work_types=WORK_TYPES, cities=CITIES)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "employer/post_job.html", user=user, job=job.data, work_types=WORK_TYPES, cities=CITIES, wallet=wallet)
 
 @app.post("/api/employer/job/{job_id}/update")
 async def update_job(request: Request, job_id: str, title: str = Form(...), description: str = Form(""), work_type: str = Form(...), duration: str = Form(...), pay: float = Form(...), phone: str = Form(...), address: str = Form(...), city: str = Form(...), notes: str = Form(""), image_url: str = Form("")):
@@ -640,7 +648,8 @@ async def view_applicants(request: Request, job_id: str):
     job = supabase.table("jobs").select("*").eq("id", job_id).single().execute()
     if not job.data: return RedirectResponse("/employer/dashboard", status_code=302)
     apps = supabase.table("applications").select("*, workers(*)").eq("job_id", job_id).execute()
-    return render_template(request, "employer/applicants.html", user=user, job=job.data, applications=apps.data)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "employer/applicants.html", user=user, job=job.data, applications=apps.data, wallet=wallet)
 
 # ==================== Admin Routes ====================
 
@@ -1047,7 +1056,8 @@ async def find_workers_page(request: Request):
     if not user: return RedirectResponse("/login", status_code=302)
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
-    return render_template(request, "employer/find_workers.html", user=user, employer=profile["data"], cities=CITIES)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "employer/find_workers.html", user=user, employer=profile["data"], cities=CITIES, wallet=wallet)
 
 # ==================== Employer Profile Routes ====================
 
@@ -1057,7 +1067,8 @@ async def employer_profile_page(request: Request):
     if not user: return RedirectResponse("/login", status_code=302)
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "employer": return RedirectResponse("/", status_code=302)
-    return render_template(request, "employer/profile.html", user=user, employer=profile["data"])
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "employer/profile.html", user=user, employer=profile["data"], wallet=wallet)
 
 @app.post("/api/employer/profile/save")
 async def save_employer_profile(request: Request, company_name: str = Form(""), company_description: str = Form("")):
@@ -1095,7 +1106,8 @@ async def notifications_page(request: Request):
     user = await get_current_user(request)
     if not user: return RedirectResponse("/login", status_code=302)
     notifs = supabase_admin.table("notifications").select("*").eq("user_id", user["sub"]).order("created_at", desc=True).limit(50).execute()
-    return render_template(request, "notifications.html", user=user, notifications=notifs.data or [])
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "notifications.html", user=user, notifications=notifs.data or [], wallet=wallet)
 
 @app.get("/api/notifications/unread")
 async def unread_notifications(request: Request):
@@ -1124,7 +1136,8 @@ async def mark_notifications_read(request: Request):
 async def messages_page(request: Request):
     user = await get_current_user(request)
     if not user: return RedirectResponse("/login", status_code=302)
-    return render_template(request, "messages.html", user=user)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "messages.html", user=user, wallet=wallet)
 
 @app.get("/api/messages/conversations")
 async def get_conversations(request: Request):
