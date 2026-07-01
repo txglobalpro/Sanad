@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ t.featured }} - Sanad{% endblock %}
+{% block content %}
+<section class="section-padding">
+  <div class="container" style="max-width:600px;">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4 text-center">
+        <div class="icon-circle mx-auto mb-3" style="width:64px;height:64px;background:#fffbeb;color:var(--accent);">
+          <i class="bi bi-star-fill fs-2"></i>
+        </div>
+        <h4 class="fw-bold mb-2">{{ t.featured }}</h4>
+        <p class="text-secondary mb-2">{{ t.feature_desc }}</p>
+        <div class="bg-light rounded-3 p-3 mb-3 text-start">
+          <p class="mb-1"><strong>{{ job.title }}</strong></p>
+          <p class="mb-0 small text-secondary">{{ job.city }} - {{ job.pay }} ل.س</p>
+        </div>
+        <div class="d-flex justify-content-between align-items-center bg-primary-50 rounded-3 p-3 mb-3">
+          <span class="fw-bold">{{ t.feature_cost }}</span>
+          <span class="fw-bold" style="color:var(--accent);">5,000 ل.س</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span>{{ t.wallet_balance }}</span>
+          <span class="fw-bold" id="walletDisplay">{{ wallet.balance if wallet else 0 }} ل.س</span>
+        </div>
+        <form method="POST" id="featureForm">
+          <button type="submit" class="btn btn-warning w-100 fw-bold" id="featureBtn" {% if not wallet or wallet.balance < 5000 %}disabled{% endif %}>
+            <i class="bi bi-star-fill ms-1"></i>{{ t.feature_confirm }}
+          </button>
+          {% if wallet and wallet.balance < 5000 %}
+          <small class="text-danger d-block mt-2">{{ t.feature_insufficient }}</small>
+          {% endif %}
+        </form>
+        <a href="/employer/dashboard" class="btn btn-outline-secondary btn-sm mt-2">{{ t.cancel }}</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.getElementById('featureForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('featureBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+  try {
+    const res = await fetch(window.location.href, { method: 'POST' });
+    const json = await res.json();
+    if (json.success) {
+      btn.innerHTML = '<i class="bi bi-check-circle"></i> {{ t.success }}';
+      setTimeout(() => window.location.href = '/employer/dashboard', 1500);
+    } else {
+      alert(json.message || '{{ t.error }}');
+      btn.disabled = false; btn.innerHTML = '<i class="bi bi-star-fill ms-1"></i>{{ t.feature_confirm }}';
+    }
+  } catch(e) {
+    alert('{{ t.error_connection }}');
+    btn.disabled = false; btn.innerHTML = '<i class="bi bi-star-fill ms-1"></i>{{ t.feature_confirm }}';
+  }
+});
+</script>
+{% endblock %}

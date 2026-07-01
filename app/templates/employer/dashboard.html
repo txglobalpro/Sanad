@@ -105,7 +105,10 @@
                 <tbody>
                   {% for job in jobs %}
                   <tr>
-                    <td class="fw-medium">{{ job.title }}</td>
+                    <td class="fw-medium">
+                      {{ job.title }}
+                      {% if job.featured %}<span class="badge bg-warning ms-1" style="font-size:0.6rem;"><i class="bi bi-star-fill"></i> {{ t.featured }}</span>{% endif %}
+                    </td>
                     <td>{{ job.city }}</td>
                     <td>{{ job.pay }} ل.س</td>
                     <td><span class="badge {% if job.status == 'open' %}bg-success{% else %}bg-secondary{% endif %}">{% if job.status == 'open' %}{{ t.ed_status_open }}{% else %}{{ t.ed_status_closed }}{% endif %}</span></td>
@@ -115,8 +118,11 @@
                       </a>
                     </td>
                     <td>
-                      <a href="/employer/edit-job/{{ job.id }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i> {{ t.ed_edit }}</a>
-                      <button onclick="deleteJob('{{ job.id }}')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> {{ t.ed_delete }}</button>
+                      {% if job.status == 'open' and not job.featured %}
+                      <a href="/api/employer/job/{{ job.id }}/feature" class="btn btn-sm btn-outline-warning" title="تمييز"><i class="bi bi-star"></i></a>
+                      {% endif %}
+                      <a href="/employer/edit-job/{{ job.id }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
+                      <button onclick="deleteJob('{{ job.id }}')" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                     </td>
                   </tr>
                   {% endfor %}

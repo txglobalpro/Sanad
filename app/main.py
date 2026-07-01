@@ -123,11 +123,27 @@ async def index(request: Request):
             wt = j.get("work_type", "أخرى")
             cat_counts[wt] = cat_counts.get(wt, 0) + 1
         cat_counts = dict(sorted(cat_counts.items(), key=lambda x: -x[1])[:14])
+        # City job counts
+        city_counts = {}
+        for j in (jobs_all.data or []):
+            c = j.get("city", "")
+            if c:
+                city_counts[c] = city_counts.get(c, 0) + 1
+        city_counts = dict(sorted(city_counts.items(), key=lambda x: -x[1]))
+        # Employer job counts for top companies
         emp_result = supabase_admin.table("employers").select("id,company_name,photo_url").limit(30).execute()
         employers_list = emp_result.data if emp_result and hasattr(emp_result, 'data') else []
+        emp_job_counts = {}
+        for j in (jobs_all.data or []):
+            eid = j.get("employer_id", "")
+            if eid:
+                emp_job_counts[eid] = emp_job_counts.get(eid, 0) + 1
+        for emp in employers_list:
+            emp["job_count"] = emp_job_counts.get(emp["id"], 0)
+        employers_list.sort(key=lambda x: -x["job_count"])
     except:
-        total_jobs = 0; today_jobs = 0; workers_count = 0; employers_count = 0; cat_counts = {}; employers_list = []
-    return render_template(request, "index.html", user=user, total_jobs=total_jobs, today_jobs=today_jobs, workers_count=workers_count, employers_count=employers_count, cat_counts=cat_counts, employers=employers_list, work_types=WORK_TYPES, cities=CITIES)
+        total_jobs = 0; today_jobs = 0; workers_count = 0; employers_count = 0; cat_counts = {}; employers_list = []; city_counts = {}
+    return render_template(request, "index.html", user=user, total_jobs=total_jobs, today_jobs=today_jobs, workers_count=workers_count, employers_count=employers_count, cat_counts=cat_counts, city_counts=city_counts, employers=employers_list, work_types=WORK_TYPES, cities=CITIES)
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -404,7 +420,8 @@ async def worker_profile_page(request: Request):
     if not user: return RedirectResponse("/login", status_code=302)
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "worker": return RedirectResponse("/", status_code=302)
-    return render_template(request, "worker/profile.html", user=user, worker=profile["data"], cities=CITIES)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "worker/profile.html", user=user, worker=profile["data"], wallet=wallet, cities=CITIES)
 
 @app.post("/api/worker/profile")
 async def save_worker_profile(request: Request, first_name: str = Form(...), last_name: str = Form(...), age: int = Form(...), gender: str = Form(...), nationality: str = Form(...), phone: str = Form(...), city: str = Form(...)):
@@ -435,7 +452,7 @@ async def upload_id(request: Request, file: UploadFile = File(...), side: str = 
         return JSONResponse({"success": False, "message": str(e)}, status_code=400)
 
 @app.get("/worker/jobs", response_class=HTMLResponse)
-async def worker_jobs(request: Request, q: str = "", work_type: str = "", city: str = ""):
+async def worker_jobs(request: Request, q: str = "", work_type: str = "", city: str = "", pay_min: int = 0, pay_max: int = 0, sort: str = "", employer_id: str = ""):
     user = await get_current_user(request)
     if not user: return RedirectResponse("/login", status_code=302)
     profile = await get_user_profile(user["sub"])
@@ -448,12 +465,30 @@ async def worker_jobs(request: Request, q: str = "", work_type: str = "", city: 
         query = query.eq("city", city)
     if work_type:
         query = query.eq("work_type", work_type)
+    if employer_id:
+        query = query.eq("employer_id", employer_id)
     result = query.order("created_at", desc=True).execute()
-    jobs = result.data
+    jobs = result.data or []
+    # Text search filter
     if q:
         ql = q.lower()
         jobs = [j for j in jobs if ql in j.get("title", "").lower() or ql in j.get("description", "").lower()]
-    return render_template(request, "worker/jobs.html", user=user, jobs=jobs, worker=worker, work_types=WORK_TYPES, cities=CITIES, q=q, sel_work_type=work_type, sel_city=city)
+    # Salary filter
+    if pay_min > 0:
+        jobs = [j for j in jobs if (j.get("pay") or 0) >= pay_min]
+    if pay_max > 0:
+        jobs = [j for j in jobs if (j.get("pay") or 0) <= pay_max]
+    # Sort
+    if sort == "pay_desc":
+        jobs.sort(key=lambda j: -(j.get("pay") or 0))
+    elif sort == "pay_asc":
+        jobs.sort(key=lambda j: j.get("pay") or 0)
+    elif sort == "title":
+        jobs.sort(key=lambda j: j.get("title", ""))
+    else:
+        # Featured first, then by date
+        jobs.sort(key=lambda j: (0 if j.get("featured") else 1, -(j.get("created_at") or "")))
+    return render_template(request, "worker/jobs.html", user=user, jobs=jobs, worker=worker, work_types=WORK_TYPES, cities=CITIES, q=q, sel_work_type=work_type, sel_city=city, pay_min=pay_min, pay_max=pay_max, sort=sort, employer_id=employer_id)
 
 @app.get("/worker/jobs/{job_id}", response_class=HTMLResponse)
 async def job_details(request: Request, job_id: str):
@@ -689,6 +724,42 @@ async def close_job(request: Request, job_id: str):
     supabase_admin.table("jobs").update({"status": "closed"}).eq("id", job_id).execute()
     return {"success": True, "message": "تم إغلاق فرصة العمل"}
 
+@app.get("/api/employer/job/{job_id}/feature")
+async def feature_job_page(request: Request, job_id: str):
+    user = await get_current_user(request)
+    if not user: return RedirectResponse("/login", status_code=302)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer":
+        raise HTTPException(403)
+    job = supabase.table("jobs").select("*").eq("id", job_id).single().execute()
+    if not job.data:
+        return RedirectResponse("/employer/dashboard", status_code=302)
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "employer/feature_job.html", user=user, job=job.data, wallet=wallet)
+
+@app.post("/api/employer/job/{job_id}/feature")
+async def feature_job(request: Request, job_id: str):
+    user = await get_current_user(request)
+    if not user: raise HTTPException(401)
+    profile = await get_user_profile(user["sub"])
+    if not profile or profile["type"] != "employer":
+        raise HTTPException(403)
+    cost = 5000
+    wallet = await get_wallet(user["sub"])
+    if not wallet or wallet["balance"] < cost:
+        return JSONResponse({"success": False, "message": f"رصيد المحفظة غير كافٍ. التكلفة: {cost} ل.س"}, status_code=400)
+    try:
+        new_balance = wallet["balance"] - cost
+        supabase_admin.table("wallets").update({"balance": new_balance}).eq("id", wallet["id"]).execute()
+        supabase_admin.table("wallet_transactions").insert({
+            "wallet_id": wallet["id"], "amount": -cost, "type": "withdrawal",
+            "description": "تمييز فرصة عمل"
+        }).execute()
+        supabase_admin.table("jobs").update({"featured": True}).eq("id", job_id).execute()
+        return {"success": True, "message": f"تم تمييز فرصة العمل. تم خصم {cost} ل.س من محفظتك"}
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=400)
+
 # ==================== Reviews & Wallets Initialization ====================
 
 # ==================== Database Init ====================
@@ -759,6 +830,9 @@ ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_logo TEXT;
 ALTER TABLE employers ADD COLUMN IF NOT EXISTS company_description TEXT;
 ALTER TABLE employers ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT FALSE;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS featured_until TIMESTAMPTZ;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pay_max INTEGER DEFAULT 0;
 CREATE TABLE IF NOT EXISTS payment_methods (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   currency TEXT NOT NULL,
@@ -936,7 +1010,8 @@ async def worker_freelance_page(request: Request):
     if not user: return RedirectResponse("/login", status_code=302)
     profile = await get_user_profile(user["sub"])
     if not profile or profile["type"] != "worker": return RedirectResponse("/", status_code=302)
-    return render_template(request, "worker/freelance.html", user=user, worker=profile["data"])
+    wallet = await get_wallet(user["sub"])
+    return render_template(request, "worker/freelance.html", user=user, worker=profile["data"], wallet=wallet)
 
 @app.post("/api/worker/freelance/save")
 async def save_freelance_settings(request: Request, available: bool = Form(False), hourly_rate: int = Form(0), freelance_desc: str = Form("")):

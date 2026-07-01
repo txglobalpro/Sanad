@@ -67,8 +67,26 @@
   </div>
 </section>
 
+<!-- Cities Bar -->
+{% if city_counts %}
+<section style="padding:1rem 0;background:var(--white);border-top:1px solid var(--dark-200);">
+  <div class="container">
+    <h6 class="fw-bold mb-2 text-secondary" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;">
+      <i class="bi bi-geo-alt ms-1"></i>{{ t.jobs_by_city }}
+    </h6>
+    <div class="d-flex flex-wrap gap-1">
+      {% for city, count in city_counts.items() %}
+      <a href="/worker/jobs?city={{ city }}" class="chip">
+        {{ city }} <span class="fw-bold ms-1" style="color:var(--primary);">{{ count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <!-- Category Grid + Employer Logos (2-column like jobs.bg) -->
-<section style="padding:2rem 0;background:var(--white);">
+<section style="padding:2rem 0;background:var(--bg);">
   <div class="container">
     <div class="row g-4">
       <!-- Left: Categories -->
@@ -107,16 +125,17 @@
         </h6>
         <div class="row g-2">
           {% for emp in employers %}
-          {% if emp.company_name %}
+          {% if emp.company_name and emp.job_count > 0 %}
           <div class="col-6 col-lg-4">
-            <div class="emp-logo-box">
+            <a href="/worker/jobs?employer_id={{ emp.id }}" class="emp-logo-box" style="text-decoration:none;">
               {% if emp.photo_url %}
               <img src="{{ emp.photo_url }}" alt="{{ emp.company_name }}" class="emp-logo-img" loading="lazy">
               {% else %}
               <div class="emp-logo-placeholder">{{ emp.company_name[:2] }}</div>
               {% endif %}
               <small class="emp-logo-name">{{ emp.company_name }}</small>
-            </div>
+              <span class="badge bg-primary-50 text-primary" style="font-size:0.65rem;">{{ emp.job_count }} {{ t.stat_jobs_total }}</span>
+            </a>
           </div>
           {% endif %}
           {% endfor %}
